@@ -6,10 +6,11 @@
   <title>JR Veículos - Gestão de Estoque</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <!-- SDK do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 font-sans">
 
-  <!-- Header -->
   <header class="bg-blue-900 text-white shadow-lg border-b-4 border-red-600">
     <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
       <div class="flex items-center gap-3">
@@ -21,178 +22,113 @@
           <p class="text-xs text-blue-200 font-medium">Sistema de Gestão de Estoque</p>
         </div>
       </div>
-      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v3.2 Realtime + CSV Persistente</span>
+      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v4.0 Supabase</span>
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-    <!-- Painel Esquerdo -->
     <section class="lg:col-span-4 space-y-6">
       
-      <!-- Importação CSV -->
+      <!-- CSV -->
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
         <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
           <i class="fa-solid fa-file-csv text-emerald-600 text-base"></i> Importar via CSV
         </h3>
-        <p class="text-xs text-slate-500">Os veículos importados serão salvos na nuvem e ficarão visíveis para todos os usuários.</p>
-        
+        <p class="text-xs text-slate-500">Importe veículos em massa e salve direto no Supabase.</p>
         <div class="flex gap-2">
-          <button onclick="downloadCSVTemplate()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-lg text-xs transition border border-slate-300 flex items-center justify-center gap-1">
-            <i class="fa-solid fa-download"></i> Baixar Modelo
+          <button onclick="downloadCSVTemplate()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-lg text-xs border border-slate-300">
+            <i class="fa-solid fa-download"></i> Modelo
           </button>
-          
-          <label class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition cursor-pointer text-center flex items-center justify-center gap-1 shadow">
-            <i class="fa-solid fa-upload"></i> Importar CSV
+          <label class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg text-xs cursor-pointer text-center shadow">
+            <i class="fa-solid fa-upload"></i> Importar
             <input type="file" id="csv-file-input" accept=".csv" class="hidden" onchange="importCSV(event)">
           </label>
         </div>
       </div>
 
-      <!-- Indicadores -->
+      <!-- Stats -->
       <div class="grid grid-cols-3 gap-3">
         <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center border-t-4 border-t-blue-800">
           <p class="text-[10px] font-bold text-slate-500 uppercase">Total</p>
           <p id="stat-total" class="text-xl font-black text-blue-900 mt-1">0</p>
         </div>
         <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center border-t-4 border-t-red-600">
-          <p class="text-[10px] font-bold text-slate-500 uppercase"><i class="fa-solid fa-car text-red-600 mr-1"></i>Carros</p>
+          <p class="text-[10px] font-bold text-slate-500 uppercase">Carros</p>
           <p id="stat-carros" class="text-xl font-black text-slate-800 mt-1">0</p>
         </div>
         <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center border-t-4 border-t-blue-600">
-          <p class="text-[10px] font-bold text-slate-500 uppercase"><i class="fa-solid fa-motorcycle text-blue-600 mr-1"></i>Motos</p>
+          <p class="text-[10px] font-bold text-slate-500 uppercase">Motos</p>
           <p id="stat-motos" class="text-xl font-black text-slate-800 mt-1">0</p>
         </div>
       </div>
 
-      <!-- Formulário Manual -->
+      <!-- Form -->
       <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-        <h2 class="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2 border-b pb-2">
-          <i class="fa-solid fa-circle-plus text-red-600"></i> Cadastrar Veículo
-        </h2>
-
+        <h2 class="text-lg font-bold text-blue-900 mb-4 border-b pb-2">Cadastrar Veículo</h2>
         <form id="vehicle-form" class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Veículo *</label>
-            <select id="tipo" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 bg-white font-medium text-slate-700">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo *</label>
+            <select id="tipo" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
               <option value="Carro">🚗 Carro</option>
               <option value="Moto">🏍️ Moto</option>
             </select>
           </div>
-
           <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Marca *</label>
-              <input type="text" id="marca" required placeholder="Ex: Toyota" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Modelo *</label>
-              <input type="text" id="modelo" required placeholder="Ex: Corolla" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-            </div>
+            <input type="text" id="marca" required placeholder="Marca *" class="px-3 py-2 border rounded-lg text-sm">
+            <input type="text" id="modelo" required placeholder="Modelo *" class="px-3 py-2 border rounded-lg text-sm">
           </div>
-
           <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Versão</label>
-              <input type="text" id="versao" placeholder="Ex: XEI" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Combustível *</label>
-              <select id="combustivel" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 bg-white font-medium text-slate-700">
-                <option value="Flex">Flex</option>
-                <option value="Gasolina">Gasolina</option>
-                <option value="Diesel">Diesel</option>
-                <option value="Elétrico">⚡ Elétrico</option>
-                <option value="Híbrido">🔋 Híbrido</option>
-                <option value="Etanol">Etanol</option>
-              </select>
-            </div>
+            <input type="text" id="versao" placeholder="Versão" class="px-3 py-2 border rounded-lg text-sm">
+            <select id="combustivel" class="px-3 py-2 border rounded-lg text-sm bg-white">
+              <option value="Flex">Flex</option>
+              <option value="Gasolina">Gasolina</option>
+              <option value="Diesel">Diesel</option>
+              <option value="Elétrico">Elétrico</option>
+              <option value="Híbrido">Híbrido</option>
+            </select>
           </div>
-
           <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Cor *</label>
-              <input type="text" id="cor" required placeholder="Ex: Prata" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Ano *</label>
-              <input type="number" id="ano" required placeholder="Ex: 2024" min="1900" max="2027" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-            </div>
+            <input type="text" id="cor" required placeholder="Cor *" class="px-3 py-2 border rounded-lg text-sm">
+            <input type="number" id="ano" required placeholder="Ano *" class="px-3 py-2 border rounded-lg text-sm">
           </div>
-
           <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Placa *</label>
-              <input type="text" id="placa" required placeholder="ABC1D23" max="8" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm uppercase focus:outline-none focus:ring-2 focus:ring-blue-800">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">KM</label>
-              <input type="text" id="km" placeholder="Ex: 45.000" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-            </div>
+            <input type="text" id="placa" required placeholder="Placa *" class="px-3 py-2 border rounded-lg text-sm uppercase">
+            <input type="text" id="km" placeholder="KM" class="px-3 py-2 border rounded-lg text-sm">
           </div>
-
           <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Preço (R$)</label>
-              <input type="text" id="preco" placeholder="Ex: 85.000,00" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
-              <select id="status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 bg-white">
-                <option value="Disponível">Disponível</option>
-                <option value="Reservado">Reservado</option>
-                <option value="Vendido">Vendido</option>
-              </select>
-            </div>
+            <input type="text" id="preco" placeholder="Preço (R$)" class="px-3 py-2 border rounded-lg text-sm">
+            <select id="status" class="px-3 py-2 border rounded-lg text-sm bg-white">
+              <option value="Disponível">Disponível</option>
+              <option value="Reservado">Reservado</option>
+              <option value="Vendido">Vendido</option>
+            </select>
           </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Localização Atual</label>
-            <input type="text" id="localizacao" placeholder="Ex: Loja, Lava Jato" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Observações</label>
-            <textarea id="observacao" rows="3" placeholder="Ex: Único dono..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800"></textarea>
-          </div>
-
-          <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg transition-colors text-sm shadow">
-            Salvar Veículo
-          </button>
+          <input type="text" id="localizacao" placeholder="Localização (Ex: Loja)" class="w-full px-3 py-2 border rounded-lg text-sm">
+          <textarea id="observacao" rows="2" placeholder="Observações" class="w-full px-3 py-2 border rounded-lg text-sm"></textarea>
+          <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg text-sm shadow">Salvar Veículo</button>
         </form>
       </div>
     </section>
 
-    <!-- Lista de Veículos -->
+    <!-- Lista -->
     <section class="lg:col-span-8 space-y-4">
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div class="flex bg-slate-100 p-1 rounded-lg w-full sm:w-auto">
-          <button onclick="setTab('Todos')" id="tab-Todos" class="tab-btn flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition-colors bg-blue-900 text-white shadow-sm">
-            Todos
-          </button>
-          <button onclick="setTab('Carro')" id="tab-Carro" class="tab-btn flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-semibold transition-colors text-slate-600 hover:text-blue-900">
-            <i class="fa-solid fa-car mr-1"></i> Carros
-          </button>
-          <button onclick="setTab('Moto')" id="tab-Moto" class="tab-btn flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-semibold transition-colors text-slate-600 hover:text-blue-900">
-            <i class="fa-solid fa-motorcycle mr-1"></i> Motos
-          </button>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 justify-between">
+        <div class="flex bg-slate-100 p-1 rounded-lg">
+          <button onclick="setTab('Todos')" id="tab-Todos" class="tab-btn px-4 py-1.5 rounded-md text-xs font-bold bg-blue-900 text-white">Todos</button>
+          <button onclick="setTab('Carro')" id="tab-Carro" class="tab-btn px-4 py-1.5 rounded-md text-xs font-semibold text-slate-600">Carros</button>
+          <button onclick="setTab('Moto')" id="tab-Moto" class="tab-btn px-4 py-1.5 rounded-md text-xs font-semibold text-slate-600">Motos</button>
         </div>
-
-        <div class="relative w-full sm:w-64">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
-          <input type="text" id="search" placeholder="Buscar marca, placa..." class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-        </div>
+        <input type="text" id="search" placeholder="Buscar..." class="px-3 py-2 border rounded-lg text-sm w-full sm:w-64">
       </div>
 
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="bg-blue-900 text-white text-xs font-bold uppercase tracking-wider">
+              <tr class="bg-blue-900 text-white text-xs font-bold uppercase">
                 <th class="p-4">Tipo / Veículo</th>
                 <th class="p-4">Placa / Cor</th>
-                <th class="p-4">Ano / KM / Entrada</th>
-                <th class="p-4">Tempo de Estoque</th>
+                <th class="p-4">Ano / KM</th>
                 <th class="p-4">Local / Status</th>
                 <th class="p-4 text-right">Ações</th>
               </tr>
@@ -200,34 +136,18 @@
             <tbody id="vehicle-list" class="divide-y divide-slate-100 text-sm"></tbody>
           </table>
         </div>
-
         <div id="empty-state" class="hidden p-8 text-center text-slate-400">
-          <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-300"></i>
-          <p class="text-sm font-medium">Nenhum veículo encontrado nesta categoria.</p>
+          <p class="text-sm">Nenhum veículo encontrado.</p>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Módulos do Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    // ⚠️ SUBSTITUA PELAS SUAS CHAVES DO CONSOLE DO FIREBASE ⚠️
-    const firebaseConfig = {
-      apiKey: "SUA_API_KEY",
-      authDomain: "SEU_PROJETO.firebaseapp.com",
-      databaseURL: "https://SEU_PROJETO-default-rtdb.firebaseio.com",
-      projectId: "SEU_PROJETO",
-      storageBucket: "SEU_PROJETO.appspot.com",
-      messagingSenderId: "SEU_SENDER_ID",
-      appId: "SEU_APP_ID"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const vehiclesRef = ref(db, 'vehicles');
+  <script>
+    // ⚠️ SUBSTITUA PELAS SUAS CREDENCIAIS DO SUPABASE ⚠️
+    const SUPABASE_URL = "https://SEU_PROJETO.supabase.co";
+    const SUPABASE_KEY = "SUA_ANON_KEY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let vehicles = [];
     let currentTab = 'Todos';
@@ -235,109 +155,36 @@
     const form = document.getElementById('vehicle-form');
     const vehicleList = document.getElementById('vehicle-list');
     const searchInput = document.getElementById('search');
-    const emptyState = document.getElementById('empty-state');
 
-    // Sempre que a página é aberta/atualizada ou um novo dado é adicionado (inclusive via CSV), esta função busca e exibe os dados salvos
-    onValue(vehiclesRef, (snapshot) => {
-      const data = snapshot.val();
-      vehicles = [];
-      if (data) {
-        Object.keys(data).forEach(key => {
-          vehicles.push({ firebaseId: key, ...data[key] });
-        });
+    async function loadVehicles() {
+      const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false });
+      if (!error && data) {
+        vehicles = data;
+        render();
       }
-      render();
-    });
+    }
 
-    window.downloadCSVTemplate = () => {
-      const headers = "tipo,marca,modelo,versao,combustivel,cor,ano,placa,km,preco,status,localizacao,observacao\n";
-      const example1 = "Carro,Toyota,Corolla,XEI,Flex,Prata,2022,ABC1D23,45000,95000.00,Disponível,Loja,Único dono\n";
-      const example2 = "Moto,Honda,CG 160,Titan,Gasolina,Vermelha,2023,XYZ9K88,12000,16500.00,Disponível,Lava Jato,Revisada\n";
-      
-      const blob = new Blob([headers + example1 + example2], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'modelo_importacao_jr_veiculos.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    };
+    // Escuta alterações no banco em tempo real
+    supabase.channel('custom-all-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => {
+        loadVehicles();
+      })
+      .subscribe();
 
-    window.importCSV = (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target.result;
-        const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        
-        if (lines.length <= 1) {
-          alert('O arquivo CSV está vazio ou possui apenas o cabeçalho.');
-          return;
-        }
-
-        let cadastrados = 0;
-        let duplicados = 0;
-
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
-
-          if (cols.length < 8) continue;
-
-          const [tipo, marca, modelo, versao, combustivel, cor, ano, placa, km, preco, status, localizacao, observacao] = cols;
-          const placaUpper = (placa || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-
-          if (!placaUpper) continue;
-
-          if (vehicles.some(v => v.placa === placaUpper)) {
-            duplicados++;
-            continue;
-          }
-
-          const newVehicle = {
-            tipo: tipo || 'Carro',
-            marca: marca || 'N/A',
-            modelo: modelo || 'N/A',
-            versao: versao || '',
-            combustivel: combustivel || 'Flex',
-            cor: cor || 'N/A',
-            ano: parseInt(ano, 10) || new Date().getFullYear(),
-            placa: placaUpper,
-            km: km ? parseInt(km.replace(/\D/g, ''), 10) : null,
-            preco: preco ? parseFloat(preco.replace(',', '.')) : null,
-            status: status || 'Disponível',
-            localizacao: localizacao || 'Loja',
-            observacao: observacao || '',
-            dataCadastro: new Date().toLocaleDateString('pt-BR')
-          };
-
-          // Salva na nuvem (Firebase)
-          push(vehiclesRef, newVehicle);
-          cadastrados++;
-        }
-
-        alert(`Importação concluída e salva no banco de dados!\n\n- Veículos adicionados: ${cadastrados}\n- Placas duplicadas ignoradas: ${duplicados}`);
-        event.target.value = '';
-      };
-
-      reader.readAsText(file);
-    };
-
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const placa = document.getElementById('placa').value.trim().toUpperCase();
 
-      if (vehicles.some(v => v.placa === placa)) {
+      const { data: existing } = await supabase.from('vehicles').select('id').eq('placa', placa);
+      if (existing && existing.length > 0) {
         alert('Já existe um veículo cadastrado com esta placa!');
         return;
       }
 
-      const kmClean = document.getElementById('km').value.replace(/\./g, '');
-      const precoClean = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
-      
-      const newVehicle = {
+      const km = document.getElementById('km').value.replace(/\./g, '');
+      const preco = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
+
+      const payload = {
         tipo: document.getElementById('tipo').value,
         marca: document.getElementById('marca').value.trim(),
         modelo: document.getElementById('modelo').value.trim(),
@@ -346,161 +193,145 @@
         cor: document.getElementById('cor').value.trim(),
         ano: parseInt(document.getElementById('ano').value, 10),
         placa: placa,
-        km: kmClean !== "" ? parseInt(kmClean, 10) : null,
-        preco: precoClean !== "" ? parseFloat(precoClean) : null,
+        km: km ? parseInt(km, 10) : null,
+        preco: preco ? parseFloat(preco) : null,
         localizacao: document.getElementById('localizacao').value.trim() || 'Loja',
         status: document.getElementById('status').value,
-        observacao: document.getElementById('observacao').value.trim(),
-        dataCadastro: new Date().toLocaleDateString('pt-BR')
+        observacao: document.getElementById('observacao').value.trim()
       };
 
-      push(vehiclesRef, newVehicle);
-      form.reset();
+      const { error } = await supabase.from('vehicles').insert([payload]);
+      if (!error) {
+        form.reset();
+        loadVehicles();
+      } else {
+        alert('Erro ao salvar veículo.');
+      }
     });
 
-    // Função de Exclusão (Funciona para dados normais e importados)
-    window.deleteVehicle = (id) => {
+    window.deleteVehicle = async (id) => {
       if (confirm('Deseja realmente remover este veículo?')) {
-        remove(ref(db, `vehicles/${id}`));
+        await supabase.from('vehicles').delete().eq('id', id);
+        loadVehicles();
       }
     };
 
-    // Edição de Preço
-    window.editPreco = (id) => {
-      const vehicle = vehicles.find(v => v.firebaseId === id);
-      if (!vehicle) return;
-      const precoAtual = vehicle.preco ? vehicle.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '';
-      const novoPreco = prompt(`Editar preço do veículo (${vehicle.placa}):`, precoAtual);
+    window.editPreco = async (id) => {
+      const v = vehicles.find(item => item.id === id);
+      const novoPreco = prompt(`Editar preço (${v.placa}):`, v.preco || '');
       if (novoPreco !== null) {
         const limpo = novoPreco.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
-        update(ref(db, `vehicles/${id}`), { preco: limpo !== "" ? parseFloat(limpo) : null });
+        await supabase.from('vehicles').update({ preco: limpo ? parseFloat(limpo) : null }).eq('id', id);
+        loadVehicles();
       }
     };
 
-    // Edição de Localização
-    window.editLocalizacao = (id) => {
-      const vehicle = vehicles.find(v => v.firebaseId === id);
-      if (!vehicle) return;
-      const novoLocal = prompt(`Editar localização (${vehicle.placa}):`, vehicle.localizacao || 'Loja');
+    window.editLocalizacao = async (id) => {
+      const v = vehicles.find(item => item.id === id);
+      const novoLocal = prompt(`Editar localização (${v.placa}):`, v.localizacao || 'Loja');
       if (novoLocal !== null) {
-        update(ref(db, `vehicles/${id}`), { localizacao: novoLocal.trim() || 'Loja' });
+        await supabase.from('vehicles').update({ localizacao: novoLocal.trim() || 'Loja' }).eq('id', id);
+        loadVehicles();
       }
     };
 
-    // Edição de Placa
-    window.editPlaca = (id) => {
-      const vehicle = vehicles.find(v => v.firebaseId === id);
-      if (!vehicle) return;
-      const novaPlaca = prompt(`Editar placa:`, vehicle.placa);
-      if (novaPlaca !== null) {
-        const placaFormatada = novaPlaca.toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
-        if (vehicles.some(v => v.placa === placaFormatada && v.firebaseId !== id)) {
-          alert('Placa já cadastrada em outro veículo!');
-          return;
+    window.updateStatus = async (id, status) => {
+      await supabase.from('vehicles').update({ status }).eq('id', id);
+      loadVehicles();
+    };
+
+    window.downloadCSVTemplate = () => {
+      const headers = "tipo,marca,modelo,versao,combustivel,cor,ano,placa,km,preco,status,localizacao,observacao\n";
+      const example = "Carro,Toyota,Corolla,XEI,Flex,Prata,2022,ABC1D23,45000,95000.00,Disponível,Loja,Único dono\n";
+      const blob = new Blob([headers + example], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'modelo_veiculos.csv';
+      a.click();
+    };
+
+    window.importCSV = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const lines = e.target.result.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+          const c = lines[i].split(',').map(item => item.trim().replace(/^["']|["']$/g, ''));
+          if (c.length < 8) continue;
+          rows.push({
+            tipo: c[0] || 'Carro',
+            marca: c[1] || 'N/A',
+            modelo: c[2] || 'N/A',
+            versao: c[3] || '',
+            combustivel: c[4] || 'Flex',
+            cor: c[5] || 'N/A',
+            ano: parseInt(c[6], 10) || 2024,
+            placa: c[7].toUpperCase().replace(/[^A-Z0-9]/g, ''),
+            km: c[8] ? parseInt(c[8].replace(/\D/g, ''), 10) : null,
+            preco: c[9] ? parseFloat(c[9].replace(',', '.')) : null,
+            status: c[10] || 'Disponível',
+            localizacao: c[11] || 'Loja',
+            observacao: c[12] || ''
+          });
         }
-        update(ref(db, `vehicles/${id}`), { placa: placaFormatada });
-      }
-    };
-
-    window.updateStatus = (id, newStatus) => {
-      update(ref(db, `vehicles/${id}`), { status: newStatus });
+        if (rows.length > 0) {
+          await supabase.from('vehicles').upsert(rows, { onConflict: 'placa' });
+          loadVehicles();
+          alert('Importação enviada para o Supabase!');
+        }
+      };
+      reader.readAsText(file);
     };
 
     window.setTab = (tab) => {
       currentTab = tab;
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('bg-blue-900', 'text-white', 'shadow-sm');
-        btn.classList.add('text-slate-600');
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('bg-blue-900', 'text-white');
+        b.classList.add('text-slate-600');
       });
-      const activeBtn = document.getElementById(`tab-${tab}`);
-      activeBtn.classList.add('bg-blue-900', 'text-white', 'shadow-sm');
-      activeBtn.classList.remove('text-slate-600');
+      document.getElementById(`tab-${tab}`).classList.add('bg-blue-900', 'text-white');
       render();
     };
-
-    function calcularDiasEstoque(dataCad) {
-      if (!dataCad) return null;
-      const parts = dataCad.split('/');
-      if (parts.length !== 3) return null;
-      const dataEntrada = new Date(parts[2], parts[1] - 1, parts[0]);
-      const hoje = new Date();
-      hoje.setHours(0,0,0,0);
-      dataEntrada.setHours(0,0,0,0);
-      const diffDays = Math.floor((hoje - dataEntrada) / (1000 * 60 * 60 * 24));
-      return diffDays < 0 ? 0 : diffDays;
-    }
 
     function render() {
       const query = searchInput.value.toLowerCase().trim();
       const filtered = vehicles.filter(v => {
-        const matchesTab = currentTab === 'Todos' || (v.tipo || 'Carro') === currentTab;
-        const matchesQuery = 
-          v.marca.toLowerCase().includes(query) ||
-          v.modelo.toLowerCase().includes(query) ||
-          v.placa.toLowerCase().includes(query) ||
-          (v.localizacao && v.localizacao.toLowerCase().includes(query));
+        const matchesTab = currentTab === 'Todos' || v.tipo === currentTab;
+        const matchesQuery = v.marca.toLowerCase().includes(query) || v.modelo.toLowerCase().includes(query) || v.placa.toLowerCase().includes(query);
         return matchesTab && matchesQuery;
       });
 
       document.getElementById('stat-total').innerText = vehicles.length;
-      document.getElementById('stat-carros').innerText = vehicles.filter(v => (v.tipo || 'Carro') === 'Carro').length;
+      document.getElementById('stat-carros').innerText = vehicles.filter(v => v.tipo === 'Carro').length;
       document.getElementById('stat-motos').innerText = vehicles.filter(v => v.tipo === 'Moto').length;
 
-      if (filtered.length === 0) {
-        vehicleList.innerHTML = '';
-        emptyState.classList.remove('hidden');
-        return;
-      }
-
-      emptyState.classList.add('hidden');
-      vehicleList.innerHTML = filtered.map(v => {
-        const icon = v.tipo === 'Moto' ? '<i class="fa-solid fa-motorcycle text-red-600"></i>' : '<i class="fa-solid fa-car text-blue-900"></i>';
-        const dias = calcularDiasEstoque(v.dataCadastro);
-        const precoFormatted = v.preco ? 'R$ ' + v.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Sob consulta';
-
-        return `
-        <tr class="hover:bg-slate-50 transition-colors">
+      document.getElementById('empty-state').classList.toggle('hidden', filtered.length > 0);
+      vehicleList.innerHTML = filtered.map(v => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-4 font-bold text-slate-800">${v.marca} ${v.modelo} <div class="text-xs text-slate-400 font-normal">${v.observacao || ''}</div></td>
+          <td class="p-4"><span class="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 border rounded">${v.placa}</span> <div class="text-xs text-slate-500">${v.cor}</div></td>
+          <td class="p-4">${v.ano} <div class="text-xs text-slate-500">${v.km ? v.km + ' km' : '-'}</div></td>
           <td class="p-4">
-            <div class="flex items-center gap-2 font-bold text-slate-800">${icon} <span>${v.marca} ${v.modelo}</span></div>
-            <div class="text-xs text-slate-400 mt-0.5">${v.observacao || 'Sem obs.'}</div>
-          </td>
-          <td class="p-4">
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-blue-900 border">${v.placa}</span>
-              <button onclick="editPlaca('${v.firebaseId}')" class="text-xs text-blue-800" title="Editar Placa"><i class="fa-solid fa-pen text-[10px]"></i></button>
-            </div>
-            <div class="text-xs text-slate-500 mt-1">${v.cor}</div>
-          </td>
-          <td class="p-4">
-            <div class="font-medium text-slate-700">${v.ano}</div>
-            <div class="text-xs text-slate-500">${v.km ? v.km.toLocaleString('pt-BR') + ' km' : 'Não informado'}</div>
-          </td>
-          <td class="p-4">
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">${dias !== null ? dias + ' dias' : 'N/D'}</span>
-          </td>
-          <td class="p-4">
-            <div class="flex items-center gap-1.5 text-xs text-slate-700 font-semibold mb-1">
-              <i class="fa-solid fa-location-dot text-red-600"></i> <span>${v.localizacao || 'Loja'}</span>
-              <button onclick="editLocalizacao('${v.firebaseId}')" class="text-xs text-blue-800" title="Editar Localização"><i class="fa-solid fa-pen text-[10px]"></i></button>
-            </div>
-            <div class="flex items-center gap-1 text-xs text-emerald-700 font-bold mb-1">
-              <span>${precoFormatted}</span>
-              <button onclick="editPreco('${v.firebaseId}')" class="text-xs text-blue-800" title="Editar Preço"><i class="fa-solid fa-pen text-[10px]"></i></button>
-            </div>
-            <select onchange="updateStatus('${v.firebaseId}', this.value)" class="text-xs border rounded px-2 py-1 bg-white">
+            <div class="text-xs font-semibold"><i class="fa-solid fa-location-dot text-red-600"></i> ${v.localizacao} <button onclick="editLocalizacao('${v.id}')" class="text-blue-800"><i class="fa-solid fa-pen text-[10px]"></i></button></div>
+            <div class="text-xs text-emerald-700 font-bold">${v.preco ? 'R$ ' + Number(v.preco).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Sob consulta'} <button onclick="editPreco('${v.id}')" class="text-blue-800"><i class="fa-solid fa-pen text-[10px]"></i></button></div>
+            <select onchange="updateStatus('${v.id}', this.value)" class="text-xs border rounded bg-white mt-1">
               <option value="Disponível" ${v.status === 'Disponível' ? 'selected' : ''}>Disponível</option>
               <option value="Reservado" ${v.status === 'Reservado' ? 'selected' : ''}>Reservado</option>
               <option value="Vendido" ${v.status === 'Vendido' ? 'selected' : ''}>Vendido</option>
             </select>
           </td>
           <td class="p-4 text-right">
-            <button onclick="deleteVehicle('${v.firebaseId}')" class="text-slate-400 hover:text-red-600 p-1" title="Excluir Veículo"><i class="fa-solid fa-trash-can"></i></button>
+            <button onclick="deleteVehicle('${v.id}')" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
           </td>
         </tr>
-      `}).join('');
+      `).join('');
     }
 
     searchInput.addEventListener('input', render);
+    loadVehicles();
   </script>
 </body>
 </html>
