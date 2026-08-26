@@ -214,8 +214,7 @@
   <!-- Script Supabase Integração -->
   <script>
     const SUPABASE_URL = "https://gziythkdzerqbyingnfk.supabase.co";
-    // Cole aqui a chave 'anon' pública copiada de Project Settings > API no Supabase (começa com eyJ...)
-    const SUPABASE_KEY = "SUA_CHAVE_ANON_PUBLIC_AQUI"; 
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6aXl0aGtkemVycWJ5aW5nbmZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3ODAwNTUsImV4cCI6MjEwMzM1NjA1NX0.r9vVjroSIh35K8omW2VQ0q1dslG43Zg93gq0H6o9SdY"; 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let vehicles = [];
@@ -231,7 +230,12 @@
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
+      if (error) {
+        console.error('Erro ao buscar veículos:', error.message);
+        return;
+      }
+
+      if (data) {
         vehicles = data;
         render();
       }
