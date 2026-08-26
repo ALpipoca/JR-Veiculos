@@ -27,6 +27,17 @@
     </div>
   </header>
 
+  <!-- Banner de Alerta de Erro -->
+  <div id="error-alert" class="hidden max-w-7xl mx-auto px-4 mt-4">
+    <div class="bg-red-100 border-l-4 border-red-600 text-red-800 p-4 rounded-r shadow-sm flex justify-between items-center">
+      <div>
+        <p class="font-bold text-sm" id="error-title">Erro na conexão com o Supabase</p>
+        <p class="text-xs" id="error-message"></p>
+      </div>
+      <button onclick="document.getElementById('error-alert').classList.add('hidden')" class="text-red-800 text-lg font-bold">&times;</button>
+    </div>
+  </div>
+
   <main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
 
     <!-- Painel Lateral -->
@@ -213,36 +224,52 @@
 
   <!-- Script Supabase Integração -->
   <script>
-    const SUPABASE_URL = "https://gziythkdzerqbyingnfk.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6aXl0aGtkemVycWJ5aW5nbmZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3ODAwNTUsImV4cCI6MjEwMzM1NjA1NX0.r9vVjroSIh35K8omW2VQ0q1dslG43Zg93gq0H6o9SdY"; 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Prevenção de re-declaração de variáveis globais
+    if (typeof supabaseClient === 'undefined') {
+      var SUPABASE_URL = "https://gziythkdzerqbyingnfk.supabase.co";
+      var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6aXl0aGtkemVycWJ5aW5nbmZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3ODAwNTUsImV4cCI6MjEwMzM1NjA1NX0.r9vVjroSIh35K8omW2VQ0q1dslG43Zg93gq0H6o9SdY";
+      var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
 
-    let vehicles = [];
-    let currentTab = 'Todos';
+    var vehicles = [];
+    var currentTab = 'Todos';
 
     const form = document.getElementById('vehicle-form');
     const vehicleList = document.getElementById('vehicle-list');
     const searchInput = document.getElementById('search');
 
+    function showError(title, message) {
+      document.getElementById('error-title').innerText = title;
+      document.getElementById('error-message').innerText = message;
+      document.getElementById('error-alert').classList.remove('hidden');
+    }
+
     async function loadVehicles() {
-      const { data, error } = await supabase
-        .from('vehicles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabaseClient
+          .from('vehicles')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Erro ao buscar veículos:', error.message);
-        return;
-      }
+        if (error) {
+          console.error('Erro no Supabase:', error);
+          showError('Erro ao buscar dados', error.message + ' (' + error.code + ')');
+          return;
+        }
 
-      if (data) {
-        vehicles = data;
-        render();
+        if (data) {
+          document.getElementById('error-alert').classList.add('hidden');
+          vehicles = data;
+          render();
+        }
+      } catch (err) {
+        console.error('Erro de Conexão:', err);
+        showError('Erro de conexão', 'Não foi possível se conectar com o servidor.');
       }
     }
 
-    // Escuta em tempo real para sincronizar dispositivos
-    supabase.channel('public:vehicles')
+    // Escuta em tempo real
+    supabaseClient.channel('public:vehicles')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => {
         loadVehicles();
       })
@@ -252,7 +279,13 @@
       e.preventDefault();
       const placa = document.getElementById('placa').value.trim().toUpperCase();
 
-      const { data: existing } = await supabase.from('vehicles').select('id').eq('placa', placa);
+      const { data: existing, error: checkError } = await supabaseClient.from('vehicles').select('id').eq('placa', placa);
+      
+      if (checkError) {
+        showError('Erro ao validar placa', checkError.message);
+        return;
+      }
+
       if (existing && existing.length > 0) {
         alert('Já existe um veículo cadastrado com esta placa!');
         return;
@@ -277,19 +310,20 @@
         observacao: document.getElementById('observacao').value.trim()
       };
 
-      const { error } = await supabase.from('vehicles').insert([payload]);
+      const { error } = await supabaseClient.from('vehicles').insert([payload]);
       if (!error) {
         form.reset();
         loadVehicles();
       } else {
-        alert('Erro ao cadastrar veículo: ' + error.message);
+        showError('Erro ao salvar veículo', error.message);
       }
     });
 
     window.deleteVehicle = async (id) => {
       if (confirm('Deseja realmente remover este veículo?')) {
-        await supabase.from('vehicles').delete().eq('id', id);
-        loadVehicles();
+        const { error } = await supabaseClient.from('vehicles').delete().eq('id', id);
+        if (error) showError('Erro ao excluir', error.message);
+        else loadVehicles();
       }
     };
 
@@ -300,8 +334,9 @@
       const novoPreco = prompt(`Editar preço (${v.placa}):`, precoAtual);
       if (novoPreco !== null) {
         const limpo = novoPreco.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
-        await supabase.from('vehicles').update({ preco: limpo ? parseFloat(limpo) : null }).eq('id', id);
-        loadVehicles();
+        const { error } = await supabaseClient.from('vehicles').update({ preco: limpo ? parseFloat(limpo) : null }).eq('id', id);
+        if (error) showError('Erro ao atualizar preço', error.message);
+        else loadVehicles();
       }
     };
 
@@ -310,8 +345,9 @@
       if (!v) return;
       const novoLocal = prompt(`Editar localização (${v.placa}):`, v.localizacao || 'Loja');
       if (novoLocal !== null) {
-        await supabase.from('vehicles').update({ localizacao: novoLocal.trim() || 'Loja' }).eq('id', id);
-        loadVehicles();
+        const { error } = await supabaseClient.from('vehicles').update({ localizacao: novoLocal.trim() || 'Loja' }).eq('id', id);
+        if (error) showError('Erro ao atualizar localização', error.message);
+        else loadVehicles();
       }
     };
 
@@ -321,19 +357,21 @@
       const novaPlaca = prompt(`Editar placa:`, v.placa);
       if (novaPlaca !== null) {
         const placaFormatada = novaPlaca.toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
-        const { data: existing } = await supabase.from('vehicles').select('id').eq('placa', placaFormatada);
+        const { data: existing } = await supabaseClient.from('vehicles').select('id').eq('placa', placaFormatada);
         if (existing && existing.length > 0 && existing[0].id !== id) {
           alert('Placa já cadastrada em outro veículo!');
           return;
         }
-        await supabase.from('vehicles').update({ placa: placaFormatada }).eq('id', id);
-        loadVehicles();
+        const { error } = await supabaseClient.from('vehicles').update({ placa: placaFormatada }).eq('id', id);
+        if (error) showError('Erro ao atualizar placa', error.message);
+        else loadVehicles();
       }
     };
 
     window.updateStatus = async (id, status) => {
-      await supabase.from('vehicles').update({ status }).eq('id', id);
-      loadVehicles();
+      const { error } = await supabaseClient.from('vehicles').update({ status }).eq('id', id);
+      if (error) showError('Erro ao atualizar status', error.message);
+      else loadVehicles();
     };
 
     window.downloadCSVTemplate = () => {
@@ -386,12 +424,12 @@
         }
 
         if (rows.length > 0) {
-          const { error } = await supabase.from('vehicles').upsert(rows, { onConflict: 'placa' });
+          const { error } = await supabaseClient.from('vehicles').upsert(rows, { onConflict: 'placa' });
           if (!error) {
             alert('Importação concluída no Supabase!');
             loadVehicles();
           } else {
-            alert('Erro ao importar: ' + error.message);
+            showError('Erro ao importar CSV', error.message);
           }
         }
         event.target.value = '';
@@ -424,9 +462,9 @@
       const filtered = vehicles.filter(v => {
         const matchesTab = currentTab === 'Todos' || v.tipo === currentTab;
         const matchesQuery = 
-          v.marca.toLowerCase().includes(query) ||
-          v.modelo.toLowerCase().includes(query) ||
-          v.placa.toLowerCase().includes(query) ||
+          (v.marca && v.marca.toLowerCase().includes(query)) ||
+          (v.modelo && v.modelo.toLowerCase().includes(query)) ||
+          (v.placa && v.placa.toLowerCase().includes(query)) ||
           (v.localizacao && v.localizacao.toLowerCase().includes(query));
         return matchesTab && matchesQuery;
       });
@@ -445,18 +483,18 @@
         return `
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="p-4">
-            <div class="flex items-center gap-2 font-bold text-slate-800">${icon} <span>${v.marca} ${v.modelo}</span></div>
+            <div class="flex items-center gap-2 font-bold text-slate-800">${icon} <span>${v.marca || ''} ${v.modelo || ''}</span></div>
             <div class="text-xs text-slate-400 mt-0.5">${v.observacao || 'Sem obs.'}</div>
           </td>
           <td class="p-4">
             <div class="flex items-center gap-2">
-              <span class="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-blue-900 border">${v.placa}</span>
+              <span class="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-blue-900 border">${v.placa || ''}</span>
               <button onclick="editPlaca('${v.id}')" class="text-xs text-blue-800" title="Editar Placa"><i class="fa-solid fa-pen text-[10px]"></i></button>
             </div>
-            <div class="text-xs text-slate-500 mt-1">${v.cor}</div>
+            <div class="text-xs text-slate-500 mt-1">${v.cor || ''}</div>
           </td>
           <td class="p-4">
-            <div class="font-medium text-slate-700">${v.ano}</div>
+            <div class="font-medium text-slate-700">${v.ano || ''}</div>
             <div class="text-xs text-slate-500">${v.km ? Number(v.km).toLocaleString('pt-BR') + ' km' : 'Não informado'}</div>
           </td>
           <td class="p-4">
