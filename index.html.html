@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JR Veículos - Gestão de Estoque</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans">
+
+  <!-- Header JR Veículos -->
+  <header class="bg-blue-900 text-white shadow-lg border-b-4 border-red-600">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="bg-red-600 p-2.5 rounded-lg text-white shadow">
+          <i class="fa-solid fa-car-side text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black tracking-wider text-white uppercase">JR VEÍCULOS</h1>
+          <p class="text-xs text-blue-200 font-medium">Sistema de Gestão de Estoque</p>
+        </div>
+      </div>
+      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v2.5</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+    <!-- Dashboard & Form (Esq) -->
+    <section class="lg:col-span-4 space-y-6">
+      
+      <!-- Indicadores -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center border-t-4 border-t-blue-800">
+          <p class="text-[10px] font-bold text-slate-500 uppercase">Total</p>
+          <p id="stat-total" class="text-xl font-black text-blue-900 mt-1">0</p>
+        </div>
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center border-t-4 border-t-red-600">
+          <p class="text-[10px] font-bold text-slate-500 uppercase"><i class="fa-solid fa-car text-red-600 mr-1"></i>Carros</p>
+          <p id="stat-carros" class="text-xl font-black text-slate-800 mt-1">0</p>
+        </div>
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center border-t-4 border-t-blue-600">
+          <p class="text-[10px] font-bold text-slate-500 uppercase"><i class="fa-solid fa-motorcycle text-blue-600 mr-1"></i>Motos</p>
+          <p id="stat-motos" class="text-xl font-black text-slate-800 mt-1">0</p>
+        </div>
+      </div>
+
+      <!-- Formulário -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2 border-b pb-2">
+          <i class="fa-solid fa-circle-plus text-red-600"></i> Cadastrar Veículo
+        </h2>
+
+        <form id="vehicle-form" class="space-y-4">
+          
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Veículo *</label>
+            <select id="tipo" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 bg-white font-medium text-slate-700">
+              <option value="Carro">🚗 Carro</option>
+              <option value="Moto">🏍️ Moto</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Marca *</label>
+              <input type="text" id="marca" list="marcas-list" required placeholder="Ex: Toyota, Fiat" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+              <datalist id="marcas-list">
+                <option value="Toyota"></option>
+                <option value="Citroën"></option>
+                <option value="Shineray"></option>
+                <option value="Fiat"></option>
+                <option value="Chevrolet"></option>
+                <option value="Volkswagen"></option>
+                <option value="Honda"></option>
+                <option value="Yamaha"></option>
+                <option value="Ford"></option>
+                <option value="Hyundai"></option>
+                <option value="Jeep"></option>
+                <option value="BYD"></option>
+                <option value="GWM"></option>
+              </datalist>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Modelo *</label>
+              <input type="text" id="modelo" list="modelos-list" required placeholder="Ex: Corolla, Strada" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+              <datalist id="modelos-list"></datalist>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Versão</label>
+              <input type="text" id="versao" list="versoes-list" placeholder="Ex: XEI, Volcano" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+              <datalist id="versoes-list"></datalist>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Combustível *</label>
+              <select id="combustivel" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 bg-white font-medium text-slate-700">
+                <option value="Flex">Flex</option>
+                <option value="Gasolina">Gasolina</option>
+                <option value="Diesel">Diesel</option>
+                <option value="Elétrico">⚡ Elétrico</option>
+                <option value="Híbrido">🔋 Híbrido</option>
+                <option value="Etanol">Etanol</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Cor *</label>
+              <input type="text" id="cor" required placeholder="Ex: Prata" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Ano *</label>
+              <input type="number" id="ano" required placeholder="Ex: 2024" min="1900" max="2027" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Placa *</label>
+              <input type="text" id="placa" required placeholder="ABC1D23" max="8" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm uppercase focus:outline-none focus:ring-2 focus:ring-blue-800">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">KM</label>
+              <input type="text" id="km" placeholder="Ex: 45.000" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Preço (R$)</label>
+              <input type="text" id="preco" placeholder="Ex: 85.000,00" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+              <select id="status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 bg-white">
+                <option value="Disponível">Disponível</option>
+                <option value="Reservado">Reservado</option>
+                <option value="Vendido">Vendido</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Localização Atual</label>
+            <input type="text" id="localizacao" list="locais-list" placeholder="Ex: Loja, AutoTeks, Lava Jato" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            <datalist id="locais-list">
+              <option value="Loja"></option>
+              <option value="AutoTeks"></option>
+              <option value="Mecânico Parceiro"></option>
+              <option value="Lava Jato"></option>
+              <option value="Funilaria / Pintura"></option>
+              <option value="Vistoria"></option>
+            </datalist>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Observações</label>
+            <textarea id="observacao" rows="3" placeholder="Ex: Único dono, revisões em dia..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800"></textarea>
+          </div>
+
+          <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg transition-colors text-sm shadow">
+            Salvar Veículo
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Lista de Veículos (Dir) -->
+    <section class="lg:col-span-8 space-y-4">
+      
+      <!-- Abas de Categoria e Busca -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        
+        <div class="flex bg-slate-100 p-1 rounded-lg w-full sm:w-auto">
+          <button onclick="setTab('Todos')" id="tab-Todos" class="tab-btn flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition-colors bg-blue-900 text-white shadow-sm">
+            Todos
+          </button>
+          <button onclick="setTab('Carro')" id="tab-Carro" class="tab-btn flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-semibold transition-colors text-slate-600 hover:text-blue-900">
+            <i class="fa-solid fa-car mr-1"></i> Carros
+          </button>
+          <button onclick="setTab('Moto')" id="tab-Moto" class="tab-btn flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-semibold transition-colors text-slate-600 hover:text-blue-900">
+            <i class="fa-solid fa-motorcycle mr-1"></i> Motos
+          </button>
+        </div>
+
+        <div class="relative w-full sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+          <input type="text" id="search" placeholder="Buscar marca, placa, data..." class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+        </div>
+
+      </div>
+
+      <!-- Tabela -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-blue-900 text-white text-xs font-bold uppercase tracking-wider">
+                <th class="p-4">Tipo / Veículo</th>
+                <th class="p-4">Placa / Cor</th>
+                <th class="p-4">Ano / KM / Entrada</th>
+                <th class="p-4">Tempo de Estoque</th>
+                <th class="p-4">Local / Status</th>
+                <th class="p-4 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="vehicle-list" class="divide-y divide-slate-100 text-sm">
+              <!-- Renderizado via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="empty-state" class="hidden p-8 text-center text-slate-400">
+          <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-300"></i>
+          <p class="text-sm font-medium">Nenhum veículo encontrado nesta categoria.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const dbMarcas = {
+      'toyota': {
+        tipo: 'Carro',
+        modelos: ['Corolla', 'Corolla Cross', 'Yaris', 'Hilux', 'SW4', 'RAV4'],
+        versoes: ['GLi', 'XEi', 'ALTIS', 'GR-Sport', 'XR', 'XRE', 'XRX', 'SRX']
+      },
+      'citroën': {
+        tipo: 'Carro',
+        modelos: ['C3', 'C4 Cactus', 'Basalt', 'Aircross', 'Jumpy'],
+        versoes: ['Live', 'Feel', 'Feel Pack', 'Shine', 'First Edition', 'You!']
+      },
+      'citroen': {
+        tipo: 'Carro',
+        modelos: ['C3', 'C4 Cactus', 'Basalt', 'Aircross', 'Jumpy'],
+        versoes: ['Live', 'Feel', 'Feel Pack', 'Shine', 'First Edition', 'You!']
+      },
+      'shineray': {
+        tipo: 'Moto',
+        modelos: ['SHI 250', 'Denver', 'XY 50', 'Phoenix', 'Free', 'Jet 125', 'Rio 125'],
+        versoes: ['EFI', 'Standard', 'Cargo', 'S', 'SE']
+      },
+      'fiat': {
+        tipo: 'Carro',
+        modelos: ['Strada', 'Toro', 'Pulse', 'Fastback', 'Mobi', 'Argo', 'Titano', 'Cronos'],
+        versoes: ['Endurance', 'Freedom', 'Volcano', 'Ranch', 'Ultra', 'Audace', 'Impetus', 'Drive']
+      },
+      'chevrolet': {
+        tipo: 'Carro',
+        modelos: ['Onix', 'Onix Plus', 'Tracker', 'S10', 'Montana', 'Spin'],
+        versoes: ['LS', 'LT', 'LTZ', 'Premier', 'RS', 'Midnight', 'High Country']
+      },
+      'volkswagen': {
+        tipo: 'Carro',
+        modelos: ['Polo', 'Nivus', 'T-Cross', 'Taos', 'Saveiro', 'Amarok', 'Virtus'],
+        versoes: ['MPI', 'TSI', 'Comfortline', 'Highline', 'Sense', 'Extreme', 'R-Line']
+      },
+      'honda': {
+        tipo: 'Moto',
+        modelos: ['CG 160', 'Biz 125', 'NXR 160 Bros', 'CB 300F Twister', 'XRE 300', 'PCX'],
+        versoes: ['Start', 'Fan', 'Titan', 'ESD', 'EX', 'CBS', 'ABS']
+      },
+      'yamaha': {
+        tipo: 'Moto',
+        modelos: ['YBR 150 Factor', 'FZ15', 'FZ25', 'Crosser 150', 'Lander 250', 'NMAX'],
+        versoes: ['ED', 'SED', 'Z', 'S', 'ABS']
+      }
+    };
+
+    let vehicles = JSON.parse(localStorage.getItem('vehicles')) || [];
+    let currentTab = 'Todos';
+
+    const form = document.getElementById('vehicle-form');
+    const vehicleList = document.getElementById('vehicle-list');
+    const searchInput = document.getElementById('search');
+    const emptyState = document.getElementById('empty-state');
+    const placaInput = document.getElementById('placa');
+    const marcaInput = document.getElementById('marca');
+    const modeloInput = document.getElementById('modelo');
+    const versaoInput = document.getElementById('versao');
+    const combustivelSelect = document.getElementById('combustivel');
+    const kmInput = document.getElementById('km');
+    const precoInput = document.getElementById('preco');
+    const localizacaoInput = document.getElementById('localizacao');
+    const tipoSelect = document.getElementById('tipo');
+    const modelosDatalist = document.getElementById('modelos-list');
+    const versoesDatalist = document.getElementById('versoes-list');
+
+    kmInput.addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value) {
+        e.target.value = parseInt(value, 10).toLocaleString('pt-BR');
+      } else {
+        e.target.value = '';
+      }
+    });
+
+    precoInput.addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value) {
+        let valFloat = (parseFloat(value) / 100).toFixed(2);
+        e.target.value = parseFloat(valFloat).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } else {
+        e.target.value = '';
+      }
+    });
+
+    marcaInput.addEventListener('input', () => {
+      const marcaVal = marcaInput.value.toLowerCase().trim();
+      modelosDatalist.innerHTML = '';
+      versoesDatalist.innerHTML = '';
+
+      if (dbMarcas[marcaVal]) {
+        const item = dbMarcas[marcaVal];
+        tipoSelect.value = item.tipo;
+
+        item.modelos.forEach(mod => {
+          modelosDatalist.innerHTML += `<option value="${mod}">`;
+        });
+        item.versoes.forEach(ver => {
+          versoesDatalist.innerHTML += `<option value="${ver}">`;
+        });
+      }
+    });
+
+    function saveToStorage() {
+      localStorage.setItem('vehicles', JSON.stringify(vehicles));
+      render();
+    }
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'vehicles') {
+        vehicles = JSON.parse(e.newValue) || [];
+        render();
+      }
+    });
+
+    placaInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    function setTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-900', 'text-white', 'shadow-sm');
+        btn.classList.add('text-slate-600');
+      });
+      const activeBtn = document.getElementById(`tab-${tab}`);
+      activeBtn.classList.add('bg-blue-900', 'text-white', 'shadow-sm');
+      activeBtn.classList.remove('text-slate-600');
+      render();
+    }
+
+    function calcularDiasEstoque(dataCad) {
+      if (!dataCad) return null;
+      
+      const parts = dataCad.split('/');
+      if (parts.length !== 3) return null;
+      
+      const dia = parseInt(parts[0], 10);
+      const mes = parseInt(parts[1], 10) - 1;
+      const ano = parseInt(parts[2], 10);
+      
+      const dataEntrada = new Date(ano, mes, dia);
+      const hoje = new Date();
+      
+      // Zera o horário para comparar apenas datas
+      hoje.setHours(0,0,0,0);
+      dataEntrada.setHours(0,0,0,0);
+      
+      const diffTime = hoje - dataEntrada;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      return diffDays < 0 ? 0 : diffDays;
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const placa = placaInput.value.trim();
+
+      const placaExiste = vehicles.some(v => v.placa === placa);
+      if (placaExiste) {
+        alert('Já existe um veículo cadastrado com esta placa!');
+        return;
+      }
+
+      const kmClean = kmInput.value.replace(/\./g, '');
+      const precoClean = precoInput.value.replace(/\./g, '').replace(',', '.');
+      
+      const hoje = new Date();
+      const dataCadastro = hoje.toLocaleDateString('pt-BR');
+
+      const newVehicle = {
+        id: Date.now(),
+        tipo: tipoSelect.value,
+        marca: marcaInput.value.trim(),
+        modelo: modeloInput.value.trim(),
+        versao: versaoInput.value.trim(),
+        combustivel: combustivelSelect.value,
+        cor: document.getElementById('cor').value.trim(),
+        ano: parseInt(document.getElementById('ano').value, 10),
+        placa: placa,
+        km: kmClean !== "" ? parseInt(kmClean, 10) : null,
+        preco: precoClean !== "" ? parseFloat(precoClean) : null,
+        localizacao: localizacaoInput.value.trim() || 'Loja',
+        status: document.getElementById('status').value,
+        observacao: document.getElementById('observacao').value.trim(),
+        dataCadastro: dataCadastro
+      };
+
+      vehicles.unshift(newVehicle);
+      saveToStorage();
+      form.reset();
+      modelosDatalist.innerHTML = '';
+      versoesDatalist.innerHTML = '';
+    });
+
+    function editPreco(id) {
+      const vehicle = vehicles.find(v => v.id === id);
+      if (!vehicle) return;
+
+      const precoAtual = vehicle.preco !== null && vehicle.preco !== undefined ? vehicle.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '';
+      const novoPrecoInput = prompt(`Editar preço do veículo ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}):`, precoAtual);
+
+      if (novoPrecoInput !== null) {
+        const precoLimpo = novoPrecoInput.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
+        vehicle.preco = precoLimpo !== "" ? parseFloat(precoLimpo) : null;
+        saveToStorage();
+      }
+    }
+
+    function editLocalizacao(id) {
+      const vehicle = vehicles.find(v => v.id === id);
+      if (!vehicle) return;
+
+      const novoLocal = prompt(`Editar localização do veículo ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}):`, vehicle.localizacao || 'Loja');
+      
+      if (novoLocal !== null) {
+        vehicle.localizacao = novoLocal.trim() || 'Loja';
+        saveToStorage();
+      }
+    }
+
+    function editPlaca(id) {
+      const vehicle = vehicles.find(v => v.id === id);
+      if (!vehicle) return;
+
+      const novaPlacaInput = prompt(`Editar placa do veículo ${vehicle.marca} ${vehicle.modelo}:`, vehicle.placa);
+      
+      if (novaPlacaInput !== null) {
+        const novaPlaca = novaPlacaInput.toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
+
+        if (!novaPlaca) {
+          alert('A placa não pode ser vazia!');
+          return;
+        }
+
+        const placaExiste = vehicles.some(v => v.placa === novaPlaca && v.id !== id);
+        if (placaExiste) {
+          alert('Esta placa já está cadastrada em outro veículo!');
+          return;
+        }
+
+        vehicle.placa = novaPlaca;
+        saveToStorage();
+      }
+    }
+
+    function editKm(id) {
+      const vehicle = vehicles.find(v => v.id === id);
+      if (!vehicle) return;
+
+      const kmAtual = vehicle.km !== null && vehicle.km !== undefined ? vehicle.km : '';
+      const novoKmInput = prompt(`Editar quilometragem do veículo ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}):`, kmAtual);
+      
+      if (novoKmInput !== null) {
+        const kmLimpo = novoKmInput.replace(/\D/g, '');
+        vehicle.km = kmLimpo !== "" ? parseInt(kmLimpo, 10) : null;
+        saveToStorage();
+      }
+    }
+
+    function editDataCadastro(id) {
+      const vehicle = vehicles.find(v => v.id === id);
+      if (!vehicle) return;
+
+      const dataAtual = vehicle.dataCadastro || new Date().toLocaleDateString('pt-BR');
+      const novaData = prompt(`Editar data de entrada para ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}) [Formato: DD/MM/AAAA]:`, dataAtual);
+      
+      if (novaData !== null) {
+        vehicle.dataCadastro = novaData.trim();
+        saveToStorage();
+      }
+    }
+
+    function editObservacao(id) {
+      const vehicle = vehicles.find(v => v.id === id);
+      if (!vehicle) return;
+
+      const novaObs = prompt(`Editar observações para ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}):`, vehicle.observacao || '');
+      
+      if (novaObs !== null) {
+        vehicle.observacao = novaObs.trim();
+        saveToStorage();
+      }
+    }
+
+    function deleteVehicle(id) {
+      if (confirm('Deseja realmente remover este veículo?')) {
+        vehicles = vehicles.filter(v => v.id !== id);
+        saveToStorage();
+      }
+    }
+
+    function updateStatus(id, newStatus) {
+      vehicles = vehicles.map(v => v.id === id ? { ...v, status: newStatus } : v);
+      saveToStorage();
+    }
+
+    function sanitizeHTML(str) {
+      const temp = document.createElement('div');
+      temp.textContent = str || '';
+      return temp.innerHTML;
+    }
+
+    function render() {
+      const query = searchInput.value.toLowerCase().trim();
+      
+      const filtered = vehicles.filter(v => {
+        const vehicleType = v.tipo || 'Carro';
+        const matchesTab = currentTab === 'Todos' || vehicleType === currentTab;
+        
+        const matchesQuery = 
+          v.marca.toLowerCase().includes(query) ||
+          v.modelo.toLowerCase().includes(query) ||
+          (v.versao && v.versao.toLowerCase().includes(query)) ||
+          (v.combustivel && v.combustivel.toLowerCase().includes(query)) ||
+          v.placa.toLowerCase().includes(query) ||
+          v.cor.toLowerCase().includes(query) ||
+          v.status.toLowerCase().includes(query) ||
+          (v.localizacao && v.localizacao.toLowerCase().includes(query)) ||
+          (v.observacao && v.observacao.toLowerCase().includes(query)) ||
+          (v.dataCadastro && v.dataCadastro.toLowerCase().includes(query)) ||
+          v.ano.toString().includes(query);
+
+        return matchesTab && matchesQuery;
+      });
+
+      document.getElementById('stat-total').innerText = vehicles.length;
+      document.getElementById('stat-carros').innerText = vehicles.filter(v => (v.tipo || 'Carro') === 'Carro').length;
+      document.getElementById('stat-motos').innerText = vehicles.filter(v => v.tipo === 'Moto').length;
+
+      if (filtered.length === 0) {
+        vehicleList.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      vehicleList.innerHTML = filtered.map(v => {
+        const isMoto = v.tipo === 'Moto';
+        const icon = isMoto ? '<i class="fa-solid fa-motorcycle text-red-600" title="Moto"></i>' : '<i class="fa-solid fa-car text-blue-900" title="Carro"></i>';
+        const versaoBadge = v.versao ? `<span class="text-xs text-blue-900 bg-blue-50 px-1.5 py-0.5 rounded ml-1.5 font-medium border border-blue-100">${sanitizeHTML(v.versao)}</span>` : '';
+        const kmFormatted = v.km !== null && v.km !== undefined ? v.km.toLocaleString('pt-BR') + ' km' : 'Não informado';
+        const precoFormatted = v.preco !== null && v.preco !== undefined && !isNaN(v.preco) ? 'R$ ' + v.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : 'Sob consulta';
+        const local = v.localizacao || 'Loja';
+        const combustivel = v.combustivel || 'Flex';
+        const dataCad = v.dataCadastro || 'Não informada';
+
+        // Cálculo do tempo em estoque
+        const diasEmEstoque = calcularDiasEstoque(v.dataCadastro);
+        let badgeTempo = '';
+
+        if (diasEmEstoque !== null) {
+          if (diasEmEstoque > 60) {
+            badgeTempo = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200"><i class="fa-solid fa-clock mr-1"></i>${diasEmEstoque} dias</span>`;
+          } else if (diasEmEstoque > 30) {
+            badgeTempo = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200"><i class="fa-solid fa-clock mr-1"></i>${diasEmEstoque} dias</span>`;
+          } else {
+            badgeTempo = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200"><i class="fa-solid fa-clock mr-1"></i>${diasEmEstoque} ${diasEmEstoque === 1 ? 'dia' : 'dias'}</span>`;
+          }
+        } else {
+          badgeTempo = `<span class="text-xs text-slate-400">N/D</span>`;
+        }
+
+        return `
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="p-4">
+            <div class="flex items-center gap-2 font-bold text-slate-800">
+              ${icon}
+              <span>${sanitizeHTML(v.marca)} ${sanitizeHTML(v.modelo)}</span>
+              ${versaoBadge}
+            </div>
+            <div class="flex items-center gap-2 mt-0.5">
+              <span class="text-xs text-slate-400 max-w-xs truncate">${sanitizeHTML(v.observacao) || 'Sem observações'}</span>
+              <button onclick="editObservacao(${v.id})" class="text-xs text-blue-800 hover:text-blue-950 underline" title="Editar Observação">
+                <i class="fa-solid fa-pen text-[10px]"></i>
+              </button>
+            </div>
+          </td>
+          <td class="p-4">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-blue-900 border border-slate-200">${sanitizeHTML(v.placa)}</span>
+              <button onclick="editPlaca(${v.id})" class="text-xs text-blue-800 hover:text-blue-950" title="Editar Placa">
+                <i class="fa-solid fa-pen text-[10px]"></i>
+              </button>
+            </div>
+            <div class="text-xs text-slate-500 mt-1">${sanitizeHTML(v.cor)}</div>
+          </td>
+          <td class="p-4">
+            <div class="font-medium text-slate-700">${v.ano} <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 ml-1">${sanitizeHTML(combustivel)}</span></div>
+            <div class="flex items-center gap-1.5 text-xs text-slate-500 font-normal mt-0.5">
+              <span>${kmFormatted}</span>
+              <button onclick="editKm(${v.id})" class="text-xs text-blue-800 hover:text-blue-950" title="Editar Quilometragem">
+                <i class="fa-solid fa-pen text-[10px]"></i>
+              </button>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+              <i class="fa-regular fa-calendar text-[10px]"></i> Entrou: ${sanitizeHTML(dataCad)}
+              <button onclick="editDataCadastro(${v.id})" class="text-xs text-blue-800 hover:text-blue-950 ml-0.5" title="Editar Data de Entrada">
+                <i class="fa-solid fa-pen text-[10px]"></i>
+              </button>
+            </div>
+          </td>
+          <td class="p-4">
+            ${badgeTempo}
+          </td>
+          <td class="p-4">
+            <div class="flex items-center gap-1.5 text-xs text-slate-700 font-semibold mb-1">
+              <i class="fa-solid fa-location-dot text-red-600"></i>
+              <span>${sanitizeHTML(local)}</span>
+              <button onclick="editLocalizacao(${v.id})" class="text-xs text-blue-800 hover:text-blue-950 ml-1" title="Editar Localização">
+                <i class="fa-solid fa-pen text-[10px]"></i>
+              </button>
+            </div>
+            <div class="flex items-center gap-1 text-xs text-emerald-700 font-bold mb-1">
+              <span>${precoFormatted}</span>
+              <button onclick="editPreco(${v.id})" class="text-xs text-blue-800 hover:text-blue-950" title="Editar Preço">
+                <i class="fa-solid fa-pen text-[10px]"></i>
+              </button>
+            </div>
+            <select onchange="updateStatus(${v.id}, this.value)" class="text-xs border rounded px-2 py-1 bg-white focus:outline-none cursor-pointer border-slate-300">
+              <option value="Disponível" ${v.status === 'Disponível' ? 'selected' : ''}>Disponível</option>
+              <option value="Reservado" ${v.status === 'Reservado' ? 'selected' : ''}>Reservado</option>
+              <option value="Vendido" ${v.status === 'Vendido' ? 'selected' : ''}>Vendido</option>
+            </select>
+          </td>
+          <td class="p-4 text-right">
+            <button onclick="deleteVehicle(${v.id})" class="text-slate-400 hover:text-red-600 transition-colors p-1" title="Excluir">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    searchInput.addEventListener('input', render);
+    render();
+  </script>
+</body>
+</html>
