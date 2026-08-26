@@ -9,7 +9,7 @@
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 font-sans">
 
-  <!-- Header JR Veículos -->
+  <!-- Header -->
   <header class="bg-blue-900 text-white shadow-lg border-b-4 border-red-600">
     <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
       <div class="flex items-center gap-3">
@@ -21,21 +21,21 @@
           <p class="text-xs text-blue-200 font-medium">Sistema de Gestão de Estoque</p>
         </div>
       </div>
-      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v3.1 Realtime + CSV</span>
+      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v3.2 Realtime + CSV Persistente</span>
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-    <!-- Dashboard & Form (Esq) -->
+    <!-- Painel Esquerdo -->
     <section class="lg:col-span-4 space-y-6">
       
-      <!-- Card de Importação CSV -->
+      <!-- Importação CSV -->
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
         <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
           <i class="fa-solid fa-file-csv text-emerald-600 text-base"></i> Importar via CSV
         </h3>
-        <p class="text-xs text-slate-500">Cadastre múltiplos veículos de uma vez importando uma planilha CSV.</p>
+        <p class="text-xs text-slate-500">Os veículos importados serão salvos na nuvem e ficarão visíveis para todos os usuários.</p>
         
         <div class="flex gap-2">
           <button onclick="downloadCSVTemplate()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-lg text-xs transition border border-slate-300 flex items-center justify-center gap-1">
@@ -65,7 +65,7 @@
         </div>
       </div>
 
-      <!-- Formulário -->
+      <!-- Formulário Manual -->
       <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
         <h2 class="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2 border-b pb-2">
           <i class="fa-solid fa-circle-plus text-red-600"></i> Cadastrar Veículo
@@ -163,7 +163,7 @@
       </div>
     </section>
 
-    <!-- Lista de Veículos (Dir) -->
+    <!-- Lista de Veículos -->
     <section class="lg:col-span-8 space-y-4">
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div class="flex bg-slate-100 p-1 rounded-lg w-full sm:w-auto">
@@ -209,10 +209,12 @@
     </section>
   </main>
 
+  <!-- Módulos do Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+    // ⚠️ SUBSTITUA PELAS SUAS CHAVES DO CONSOLE DO FIREBASE ⚠️
     const firebaseConfig = {
       apiKey: "SUA_API_KEY",
       authDomain: "SEU_PROJETO.firebaseapp.com",
@@ -235,6 +237,7 @@
     const searchInput = document.getElementById('search');
     const emptyState = document.getElementById('empty-state');
 
+    // Sempre que a página é aberta/atualizada ou um novo dado é adicionado (inclusive via CSV), esta função busca e exibe os dados salvos
     onValue(vehiclesRef, (snapshot) => {
       const data = snapshot.val();
       vehicles = [];
@@ -246,7 +249,6 @@
       render();
     });
 
-    // Função para baixar o arquivo modelo CSV
     window.downloadCSVTemplate = () => {
       const headers = "tipo,marca,modelo,versao,combustivel,cor,ano,placa,km,preco,status,localizacao,observacao\n";
       const example1 = "Carro,Toyota,Corolla,XEI,Flex,Prata,2022,ABC1D23,45000,95000.00,Disponível,Loja,Único dono\n";
@@ -262,7 +264,6 @@
       document.body.removeChild(link);
     };
 
-    // Função para importar e processar o arquivo CSV
     window.importCSV = (event) => {
       const file = event.target.files[0];
       if (!file) return;
@@ -280,18 +281,16 @@
         let cadastrados = 0;
         let duplicados = 0;
 
-        // Pula a primeira linha (cabeçalho)
         for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
 
-          if (cols.length < 8) continue; // Pula linhas incompletas
+          if (cols.length < 8) continue;
 
           const [tipo, marca, modelo, versao, combustivel, cor, ano, placa, km, preco, status, localizacao, observacao] = cols;
           const placaUpper = (placa || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
           if (!placaUpper) continue;
 
-          // Verifica duplicidade pela placa
           if (vehicles.some(v => v.placa === placaUpper)) {
             duplicados++;
             continue;
@@ -314,12 +313,13 @@
             dataCadastro: new Date().toLocaleDateString('pt-BR')
           };
 
+          // Salva na nuvem (Firebase)
           push(vehiclesRef, newVehicle);
           cadastrados++;
         }
 
-        alert(`Importação concluída!\n\n- Veículos cadastrados: ${cadastrados}\n- Placas duplicadas ignoradas: ${duplicados}`);
-        event.target.value = ''; // Limpa o input file
+        alert(`Importação concluída e salva no banco de dados!\n\n- Veículos adicionados: ${cadastrados}\n- Placas duplicadas ignoradas: ${duplicados}`);
+        event.target.value = '';
       };
 
       reader.readAsText(file);
@@ -358,6 +358,14 @@
       form.reset();
     });
 
+    // Função de Exclusão (Funciona para dados normais e importados)
+    window.deleteVehicle = (id) => {
+      if (confirm('Deseja realmente remover este veículo?')) {
+        remove(ref(db, `vehicles/${id}`));
+      }
+    };
+
+    // Edição de Preço
     window.editPreco = (id) => {
       const vehicle = vehicles.find(v => v.firebaseId === id);
       if (!vehicle) return;
@@ -369,6 +377,7 @@
       }
     };
 
+    // Edição de Localização
     window.editLocalizacao = (id) => {
       const vehicle = vehicles.find(v => v.firebaseId === id);
       if (!vehicle) return;
@@ -378,6 +387,7 @@
       }
     };
 
+    // Edição de Placa
     window.editPlaca = (id) => {
       const vehicle = vehicles.find(v => v.firebaseId === id);
       if (!vehicle) return;
@@ -389,12 +399,6 @@
           return;
         }
         update(ref(db, `vehicles/${id}`), { placa: placaFormatada });
-      }
-    };
-
-    window.deleteVehicle = (id) => {
-      if (confirm('Deseja realmente remover este veículo?')) {
-        remove(ref(db, `vehicles/${id}`));
       }
     };
 
@@ -463,7 +467,7 @@
           <td class="p-4">
             <div class="flex items-center gap-2">
               <span class="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-blue-900 border">${v.placa}</span>
-              <button onclick="editPlaca('${v.firebaseId}')" class="text-xs text-blue-800"><i class="fa-solid fa-pen text-[10px]"></i></button>
+              <button onclick="editPlaca('${v.firebaseId}')" class="text-xs text-blue-800" title="Editar Placa"><i class="fa-solid fa-pen text-[10px]"></i></button>
             </div>
             <div class="text-xs text-slate-500 mt-1">${v.cor}</div>
           </td>
@@ -477,11 +481,11 @@
           <td class="p-4">
             <div class="flex items-center gap-1.5 text-xs text-slate-700 font-semibold mb-1">
               <i class="fa-solid fa-location-dot text-red-600"></i> <span>${v.localizacao || 'Loja'}</span>
-              <button onclick="editLocalizacao('${v.firebaseId}')" class="text-xs text-blue-800"><i class="fa-solid fa-pen text-[10px]"></i></button>
+              <button onclick="editLocalizacao('${v.firebaseId}')" class="text-xs text-blue-800" title="Editar Localização"><i class="fa-solid fa-pen text-[10px]"></i></button>
             </div>
             <div class="flex items-center gap-1 text-xs text-emerald-700 font-bold mb-1">
               <span>${precoFormatted}</span>
-              <button onclick="editPreco('${v.firebaseId}')" class="text-xs text-blue-800"><i class="fa-solid fa-pen text-[10px]"></i></button>
+              <button onclick="editPreco('${v.firebaseId}')" class="text-xs text-blue-800" title="Editar Preço"><i class="fa-solid fa-pen text-[10px]"></i></button>
             </div>
             <select onchange="updateStatus('${v.firebaseId}', this.value)" class="text-xs border rounded px-2 py-1 bg-white">
               <option value="Disponível" ${v.status === 'Disponível' ? 'selected' : ''}>Disponível</option>
@@ -490,7 +494,7 @@
             </select>
           </td>
           <td class="p-4 text-right">
-            <button onclick="deleteVehicle('${v.firebaseId}')" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
+            <button onclick="deleteVehicle('${v.firebaseId}')" class="text-slate-400 hover:text-red-600 p-1" title="Excluir Veículo"><i class="fa-solid fa-trash-can"></i></button>
           </td>
         </tr>
       `}).join('');
