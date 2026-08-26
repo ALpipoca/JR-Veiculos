@@ -21,7 +21,7 @@
           <p class="text-xs text-blue-200 font-medium">Sistema de Gestão de Estoque</p>
         </div>
       </div>
-      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v2.5</span>
+      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v3.1 Realtime + CSV</span>
     </div>
   </header>
 
@@ -30,6 +30,25 @@
     <!-- Dashboard & Form (Esq) -->
     <section class="lg:col-span-4 space-y-6">
       
+      <!-- Card de Importação CSV -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-file-csv text-emerald-600 text-base"></i> Importar via CSV
+        </h3>
+        <p class="text-xs text-slate-500">Cadastre múltiplos veículos de uma vez importando uma planilha CSV.</p>
+        
+        <div class="flex gap-2">
+          <button onclick="downloadCSVTemplate()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-lg text-xs transition border border-slate-300 flex items-center justify-center gap-1">
+            <i class="fa-solid fa-download"></i> Baixar Modelo
+          </button>
+          
+          <label class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition cursor-pointer text-center flex items-center justify-center gap-1 shadow">
+            <i class="fa-solid fa-upload"></i> Importar CSV
+            <input type="file" id="csv-file-input" accept=".csv" class="hidden" onchange="importCSV(event)">
+          </label>
+        </div>
+      </div>
+
       <!-- Indicadores -->
       <div class="grid grid-cols-3 gap-3">
         <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center border-t-4 border-t-blue-800">
@@ -53,7 +72,6 @@
         </h2>
 
         <form id="vehicle-form" class="space-y-4">
-          
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Veículo *</label>
             <select id="tipo" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 bg-white font-medium text-slate-700">
@@ -65,35 +83,18 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Marca *</label>
-              <input type="text" id="marca" list="marcas-list" required placeholder="Ex: Toyota, Fiat" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-              <datalist id="marcas-list">
-                <option value="Toyota"></option>
-                <option value="Citroën"></option>
-                <option value="Shineray"></option>
-                <option value="Fiat"></option>
-                <option value="Chevrolet"></option>
-                <option value="Volkswagen"></option>
-                <option value="Honda"></option>
-                <option value="Yamaha"></option>
-                <option value="Ford"></option>
-                <option value="Hyundai"></option>
-                <option value="Jeep"></option>
-                <option value="BYD"></option>
-                <option value="GWM"></option>
-              </datalist>
+              <input type="text" id="marca" required placeholder="Ex: Toyota" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Modelo *</label>
-              <input type="text" id="modelo" list="modelos-list" required placeholder="Ex: Corolla, Strada" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-              <datalist id="modelos-list"></datalist>
+              <input type="text" id="modelo" required placeholder="Ex: Corolla" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Versão</label>
-              <input type="text" id="versao" list="versoes-list" placeholder="Ex: XEI, Volcano" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-              <datalist id="versoes-list"></datalist>
+              <input type="text" id="versao" placeholder="Ex: XEI" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Combustível *</label>
@@ -147,20 +148,12 @@
 
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Localização Atual</label>
-            <input type="text" id="localizacao" list="locais-list" placeholder="Ex: Loja, AutoTeks, Lava Jato" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-            <datalist id="locais-list">
-              <option value="Loja"></option>
-              <option value="AutoTeks"></option>
-              <option value="Mecânico Parceiro"></option>
-              <option value="Lava Jato"></option>
-              <option value="Funilaria / Pintura"></option>
-              <option value="Vistoria"></option>
-            </datalist>
+            <input type="text" id="localizacao" placeholder="Ex: Loja, Lava Jato" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Observações</label>
-            <textarea id="observacao" rows="3" placeholder="Ex: Único dono, revisões em dia..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800"></textarea>
+            <textarea id="observacao" rows="3" placeholder="Ex: Único dono..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800"></textarea>
           </div>
 
           <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg transition-colors text-sm shadow">
@@ -172,10 +165,7 @@
 
     <!-- Lista de Veículos (Dir) -->
     <section class="lg:col-span-8 space-y-4">
-      
-      <!-- Abas de Categoria e Busca -->
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
-        
         <div class="flex bg-slate-100 p-1 rounded-lg w-full sm:w-auto">
           <button onclick="setTab('Todos')" id="tab-Todos" class="tab-btn flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition-colors bg-blue-900 text-white shadow-sm">
             Todos
@@ -190,12 +180,10 @@
 
         <div class="relative w-full sm:w-64">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
-          <input type="text" id="search" placeholder="Buscar marca, placa, data..." class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+          <input type="text" id="search" placeholder="Buscar marca, placa..." class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
         </div>
-
       </div>
 
-      <!-- Tabela -->
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
@@ -209,9 +197,7 @@
                 <th class="p-4 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody id="vehicle-list" class="divide-y divide-slate-100 text-sm">
-              <!-- Renderizado via JS -->
-            </tbody>
+            <tbody id="vehicle-list" class="divide-y divide-slate-100 text-sm"></tbody>
           </table>
         </div>
 
@@ -223,128 +209,200 @@
     </section>
   </main>
 
-  <script>
-    const dbMarcas = {
-      'toyota': {
-        tipo: 'Carro',
-        modelos: ['Corolla', 'Corolla Cross', 'Yaris', 'Hilux', 'SW4', 'RAV4'],
-        versoes: ['GLi', 'XEi', 'ALTIS', 'GR-Sport', 'XR', 'XRE', 'XRX', 'SRX']
-      },
-      'citroën': {
-        tipo: 'Carro',
-        modelos: ['C3', 'C4 Cactus', 'Basalt', 'Aircross', 'Jumpy'],
-        versoes: ['Live', 'Feel', 'Feel Pack', 'Shine', 'First Edition', 'You!']
-      },
-      'citroen': {
-        tipo: 'Carro',
-        modelos: ['C3', 'C4 Cactus', 'Basalt', 'Aircross', 'Jumpy'],
-        versoes: ['Live', 'Feel', 'Feel Pack', 'Shine', 'First Edition', 'You!']
-      },
-      'shineray': {
-        tipo: 'Moto',
-        modelos: ['SHI 250', 'Denver', 'XY 50', 'Phoenix', 'Free', 'Jet 125', 'Rio 125'],
-        versoes: ['EFI', 'Standard', 'Cargo', 'S', 'SE']
-      },
-      'fiat': {
-        tipo: 'Carro',
-        modelos: ['Strada', 'Toro', 'Pulse', 'Fastback', 'Mobi', 'Argo', 'Titano', 'Cronos'],
-        versoes: ['Endurance', 'Freedom', 'Volcano', 'Ranch', 'Ultra', 'Audace', 'Impetus', 'Drive']
-      },
-      'chevrolet': {
-        tipo: 'Carro',
-        modelos: ['Onix', 'Onix Plus', 'Tracker', 'S10', 'Montana', 'Spin'],
-        versoes: ['LS', 'LT', 'LTZ', 'Premier', 'RS', 'Midnight', 'High Country']
-      },
-      'volkswagen': {
-        tipo: 'Carro',
-        modelos: ['Polo', 'Nivus', 'T-Cross', 'Taos', 'Saveiro', 'Amarok', 'Virtus'],
-        versoes: ['MPI', 'TSI', 'Comfortline', 'Highline', 'Sense', 'Extreme', 'R-Line']
-      },
-      'honda': {
-        tipo: 'Moto',
-        modelos: ['CG 160', 'Biz 125', 'NXR 160 Bros', 'CB 300F Twister', 'XRE 300', 'PCX'],
-        versoes: ['Start', 'Fan', 'Titan', 'ESD', 'EX', 'CBS', 'ABS']
-      },
-      'yamaha': {
-        tipo: 'Moto',
-        modelos: ['YBR 150 Factor', 'FZ15', 'FZ25', 'Crosser 150', 'Lander 250', 'NMAX'],
-        versoes: ['ED', 'SED', 'Z', 'S', 'ABS']
-      }
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      databaseURL: "https://SEU_PROJETO-default-rtdb.firebaseio.com",
+      projectId: "SEU_PROJETO",
+      storageBucket: "SEU_PROJETO.appspot.com",
+      messagingSenderId: "SEU_SENDER_ID",
+      appId: "SEU_APP_ID"
     };
 
-    let vehicles = JSON.parse(localStorage.getItem('vehicles')) || [];
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const vehiclesRef = ref(db, 'vehicles');
+
+    let vehicles = [];
     let currentTab = 'Todos';
 
     const form = document.getElementById('vehicle-form');
     const vehicleList = document.getElementById('vehicle-list');
     const searchInput = document.getElementById('search');
     const emptyState = document.getElementById('empty-state');
-    const placaInput = document.getElementById('placa');
-    const marcaInput = document.getElementById('marca');
-    const modeloInput = document.getElementById('modelo');
-    const versaoInput = document.getElementById('versao');
-    const combustivelSelect = document.getElementById('combustivel');
-    const kmInput = document.getElementById('km');
-    const precoInput = document.getElementById('preco');
-    const localizacaoInput = document.getElementById('localizacao');
-    const tipoSelect = document.getElementById('tipo');
-    const modelosDatalist = document.getElementById('modelos-list');
-    const versoesDatalist = document.getElementById('versoes-list');
 
-    kmInput.addEventListener('input', (e) => {
-      let value = e.target.value.replace(/\D/g, '');
-      if (value) {
-        e.target.value = parseInt(value, 10).toLocaleString('pt-BR');
-      } else {
-        e.target.value = '';
-      }
-    });
-
-    precoInput.addEventListener('input', (e) => {
-      let value = e.target.value.replace(/\D/g, '');
-      if (value) {
-        let valFloat = (parseFloat(value) / 100).toFixed(2);
-        e.target.value = parseFloat(valFloat).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      } else {
-        e.target.value = '';
-      }
-    });
-
-    marcaInput.addEventListener('input', () => {
-      const marcaVal = marcaInput.value.toLowerCase().trim();
-      modelosDatalist.innerHTML = '';
-      versoesDatalist.innerHTML = '';
-
-      if (dbMarcas[marcaVal]) {
-        const item = dbMarcas[marcaVal];
-        tipoSelect.value = item.tipo;
-
-        item.modelos.forEach(mod => {
-          modelosDatalist.innerHTML += `<option value="${mod}">`;
-        });
-        item.versoes.forEach(ver => {
-          versoesDatalist.innerHTML += `<option value="${ver}">`;
+    onValue(vehiclesRef, (snapshot) => {
+      const data = snapshot.val();
+      vehicles = [];
+      if (data) {
+        Object.keys(data).forEach(key => {
+          vehicles.push({ firebaseId: key, ...data[key] });
         });
       }
-    });
-
-    function saveToStorage() {
-      localStorage.setItem('vehicles', JSON.stringify(vehicles));
       render();
-    }
+    });
 
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'vehicles') {
-        vehicles = JSON.parse(e.newValue) || [];
-        render();
+    // Função para baixar o arquivo modelo CSV
+    window.downloadCSVTemplate = () => {
+      const headers = "tipo,marca,modelo,versao,combustivel,cor,ano,placa,km,preco,status,localizacao,observacao\n";
+      const example1 = "Carro,Toyota,Corolla,XEI,Flex,Prata,2022,ABC1D23,45000,95000.00,Disponível,Loja,Único dono\n";
+      const example2 = "Moto,Honda,CG 160,Titan,Gasolina,Vermelha,2023,XYZ9K88,12000,16500.00,Disponível,Lava Jato,Revisada\n";
+      
+      const blob = new Blob([headers + example1 + example2], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'modelo_importacao_jr_veiculos.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    // Função para importar e processar o arquivo CSV
+    window.importCSV = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target.result;
+        const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        
+        if (lines.length <= 1) {
+          alert('O arquivo CSV está vazio ou possui apenas o cabeçalho.');
+          return;
+        }
+
+        let cadastrados = 0;
+        let duplicados = 0;
+
+        // Pula a primeira linha (cabeçalho)
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+
+          if (cols.length < 8) continue; // Pula linhas incompletas
+
+          const [tipo, marca, modelo, versao, combustivel, cor, ano, placa, km, preco, status, localizacao, observacao] = cols;
+          const placaUpper = (placa || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+          if (!placaUpper) continue;
+
+          // Verifica duplicidade pela placa
+          if (vehicles.some(v => v.placa === placaUpper)) {
+            duplicados++;
+            continue;
+          }
+
+          const newVehicle = {
+            tipo: tipo || 'Carro',
+            marca: marca || 'N/A',
+            modelo: modelo || 'N/A',
+            versao: versao || '',
+            combustivel: combustivel || 'Flex',
+            cor: cor || 'N/A',
+            ano: parseInt(ano, 10) || new Date().getFullYear(),
+            placa: placaUpper,
+            km: km ? parseInt(km.replace(/\D/g, ''), 10) : null,
+            preco: preco ? parseFloat(preco.replace(',', '.')) : null,
+            status: status || 'Disponível',
+            localizacao: localizacao || 'Loja',
+            observacao: observacao || '',
+            dataCadastro: new Date().toLocaleDateString('pt-BR')
+          };
+
+          push(vehiclesRef, newVehicle);
+          cadastrados++;
+        }
+
+        alert(`Importação concluída!\n\n- Veículos cadastrados: ${cadastrados}\n- Placas duplicadas ignoradas: ${duplicados}`);
+        event.target.value = ''; // Limpa o input file
+      };
+
+      reader.readAsText(file);
+    };
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const placa = document.getElementById('placa').value.trim().toUpperCase();
+
+      if (vehicles.some(v => v.placa === placa)) {
+        alert('Já existe um veículo cadastrado com esta placa!');
+        return;
       }
+
+      const kmClean = document.getElementById('km').value.replace(/\./g, '');
+      const precoClean = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
+      
+      const newVehicle = {
+        tipo: document.getElementById('tipo').value,
+        marca: document.getElementById('marca').value.trim(),
+        modelo: document.getElementById('modelo').value.trim(),
+        versao: document.getElementById('versao').value.trim(),
+        combustivel: document.getElementById('combustivel').value,
+        cor: document.getElementById('cor').value.trim(),
+        ano: parseInt(document.getElementById('ano').value, 10),
+        placa: placa,
+        km: kmClean !== "" ? parseInt(kmClean, 10) : null,
+        preco: precoClean !== "" ? parseFloat(precoClean) : null,
+        localizacao: document.getElementById('localizacao').value.trim() || 'Loja',
+        status: document.getElementById('status').value,
+        observacao: document.getElementById('observacao').value.trim(),
+        dataCadastro: new Date().toLocaleDateString('pt-BR')
+      };
+
+      push(vehiclesRef, newVehicle);
+      form.reset();
     });
 
-    placaInput.addEventListener('input', (e) => {
-      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    });
+    window.editPreco = (id) => {
+      const vehicle = vehicles.find(v => v.firebaseId === id);
+      if (!vehicle) return;
+      const precoAtual = vehicle.preco ? vehicle.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '';
+      const novoPreco = prompt(`Editar preço do veículo (${vehicle.placa}):`, precoAtual);
+      if (novoPreco !== null) {
+        const limpo = novoPreco.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
+        update(ref(db, `vehicles/${id}`), { preco: limpo !== "" ? parseFloat(limpo) : null });
+      }
+    };
 
-    function setTab(tab) {
+    window.editLocalizacao = (id) => {
+      const vehicle = vehicles.find(v => v.firebaseId === id);
+      if (!vehicle) return;
+      const novoLocal = prompt(`Editar localização (${vehicle.placa}):`, vehicle.localizacao || 'Loja');
+      if (novoLocal !== null) {
+        update(ref(db, `vehicles/${id}`), { localizacao: novoLocal.trim() || 'Loja' });
+      }
+    };
+
+    window.editPlaca = (id) => {
+      const vehicle = vehicles.find(v => v.firebaseId === id);
+      if (!vehicle) return;
+      const novaPlaca = prompt(`Editar placa:`, vehicle.placa);
+      if (novaPlaca !== null) {
+        const placaFormatada = novaPlaca.toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
+        if (vehicles.some(v => v.placa === placaFormatada && v.firebaseId !== id)) {
+          alert('Placa já cadastrada em outro veículo!');
+          return;
+        }
+        update(ref(db, `vehicles/${id}`), { placa: placaFormatada });
+      }
+    };
+
+    window.deleteVehicle = (id) => {
+      if (confirm('Deseja realmente remover este veículo?')) {
+        remove(ref(db, `vehicles/${id}`));
+      }
+    };
+
+    window.updateStatus = (id, newStatus) => {
+      update(ref(db, `vehicles/${id}`), { status: newStatus });
+    };
+
+    window.setTab = (tab) => {
       currentTab = tab;
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('bg-blue-900', 'text-white', 'shadow-sm');
@@ -354,201 +412,29 @@
       activeBtn.classList.add('bg-blue-900', 'text-white', 'shadow-sm');
       activeBtn.classList.remove('text-slate-600');
       render();
-    }
+    };
 
     function calcularDiasEstoque(dataCad) {
       if (!dataCad) return null;
-      
       const parts = dataCad.split('/');
       if (parts.length !== 3) return null;
-      
-      const dia = parseInt(parts[0], 10);
-      const mes = parseInt(parts[1], 10) - 1;
-      const ano = parseInt(parts[2], 10);
-      
-      const dataEntrada = new Date(ano, mes, dia);
+      const dataEntrada = new Date(parts[2], parts[1] - 1, parts[0]);
       const hoje = new Date();
-      
-      // Zera o horário para comparar apenas datas
       hoje.setHours(0,0,0,0);
       dataEntrada.setHours(0,0,0,0);
-      
-      const diffTime = hoje - dataEntrada;
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
+      const diffDays = Math.floor((hoje - dataEntrada) / (1000 * 60 * 60 * 24));
       return diffDays < 0 ? 0 : diffDays;
-    }
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const placa = placaInput.value.trim();
-
-      const placaExiste = vehicles.some(v => v.placa === placa);
-      if (placaExiste) {
-        alert('Já existe um veículo cadastrado com esta placa!');
-        return;
-      }
-
-      const kmClean = kmInput.value.replace(/\./g, '');
-      const precoClean = precoInput.value.replace(/\./g, '').replace(',', '.');
-      
-      const hoje = new Date();
-      const dataCadastro = hoje.toLocaleDateString('pt-BR');
-
-      const newVehicle = {
-        id: Date.now(),
-        tipo: tipoSelect.value,
-        marca: marcaInput.value.trim(),
-        modelo: modeloInput.value.trim(),
-        versao: versaoInput.value.trim(),
-        combustivel: combustivelSelect.value,
-        cor: document.getElementById('cor').value.trim(),
-        ano: parseInt(document.getElementById('ano').value, 10),
-        placa: placa,
-        km: kmClean !== "" ? parseInt(kmClean, 10) : null,
-        preco: precoClean !== "" ? parseFloat(precoClean) : null,
-        localizacao: localizacaoInput.value.trim() || 'Loja',
-        status: document.getElementById('status').value,
-        observacao: document.getElementById('observacao').value.trim(),
-        dataCadastro: dataCadastro
-      };
-
-      vehicles.unshift(newVehicle);
-      saveToStorage();
-      form.reset();
-      modelosDatalist.innerHTML = '';
-      versoesDatalist.innerHTML = '';
-    });
-
-    function editPreco(id) {
-      const vehicle = vehicles.find(v => v.id === id);
-      if (!vehicle) return;
-
-      const precoAtual = vehicle.preco !== null && vehicle.preco !== undefined ? vehicle.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '';
-      const novoPrecoInput = prompt(`Editar preço do veículo ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}):`, precoAtual);
-
-      if (novoPrecoInput !== null) {
-        const precoLimpo = novoPrecoInput.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
-        vehicle.preco = precoLimpo !== "" ? parseFloat(precoLimpo) : null;
-        saveToStorage();
-      }
-    }
-
-    function editLocalizacao(id) {
-      const vehicle = vehicles.find(v => v.id === id);
-      if (!vehicle) return;
-
-      const novoLocal = prompt(`Editar localização do veículo ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}):`, vehicle.localizacao || 'Loja');
-      
-      if (novoLocal !== null) {
-        vehicle.localizacao = novoLocal.trim() || 'Loja';
-        saveToStorage();
-      }
-    }
-
-    function editPlaca(id) {
-      const vehicle = vehicles.find(v => v.id === id);
-      if (!vehicle) return;
-
-      const novaPlacaInput = prompt(`Editar placa do veículo ${vehicle.marca} ${vehicle.modelo}:`, vehicle.placa);
-      
-      if (novaPlacaInput !== null) {
-        const novaPlaca = novaPlacaInput.toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
-
-        if (!novaPlaca) {
-          alert('A placa não pode ser vazia!');
-          return;
-        }
-
-        const placaExiste = vehicles.some(v => v.placa === novaPlaca && v.id !== id);
-        if (placaExiste) {
-          alert('Esta placa já está cadastrada em outro veículo!');
-          return;
-        }
-
-        vehicle.placa = novaPlaca;
-        saveToStorage();
-      }
-    }
-
-    function editKm(id) {
-      const vehicle = vehicles.find(v => v.id === id);
-      if (!vehicle) return;
-
-      const kmAtual = vehicle.km !== null && vehicle.km !== undefined ? vehicle.km : '';
-      const novoKmInput = prompt(`Editar quilometragem do veículo ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}):`, kmAtual);
-      
-      if (novoKmInput !== null) {
-        const kmLimpo = novoKmInput.replace(/\D/g, '');
-        vehicle.km = kmLimpo !== "" ? parseInt(kmLimpo, 10) : null;
-        saveToStorage();
-      }
-    }
-
-    function editDataCadastro(id) {
-      const vehicle = vehicles.find(v => v.id === id);
-      if (!vehicle) return;
-
-      const dataAtual = vehicle.dataCadastro || new Date().toLocaleDateString('pt-BR');
-      const novaData = prompt(`Editar data de entrada para ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}) [Formato: DD/MM/AAAA]:`, dataAtual);
-      
-      if (novaData !== null) {
-        vehicle.dataCadastro = novaData.trim();
-        saveToStorage();
-      }
-    }
-
-    function editObservacao(id) {
-      const vehicle = vehicles.find(v => v.id === id);
-      if (!vehicle) return;
-
-      const novaObs = prompt(`Editar observações para ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}):`, vehicle.observacao || '');
-      
-      if (novaObs !== null) {
-        vehicle.observacao = novaObs.trim();
-        saveToStorage();
-      }
-    }
-
-    function deleteVehicle(id) {
-      if (confirm('Deseja realmente remover este veículo?')) {
-        vehicles = vehicles.filter(v => v.id !== id);
-        saveToStorage();
-      }
-    }
-
-    function updateStatus(id, newStatus) {
-      vehicles = vehicles.map(v => v.id === id ? { ...v, status: newStatus } : v);
-      saveToStorage();
-    }
-
-    function sanitizeHTML(str) {
-      const temp = document.createElement('div');
-      temp.textContent = str || '';
-      return temp.innerHTML;
     }
 
     function render() {
       const query = searchInput.value.toLowerCase().trim();
-      
       const filtered = vehicles.filter(v => {
-        const vehicleType = v.tipo || 'Carro';
-        const matchesTab = currentTab === 'Todos' || vehicleType === currentTab;
-        
+        const matchesTab = currentTab === 'Todos' || (v.tipo || 'Carro') === currentTab;
         const matchesQuery = 
           v.marca.toLowerCase().includes(query) ||
           v.modelo.toLowerCase().includes(query) ||
-          (v.versao && v.versao.toLowerCase().includes(query)) ||
-          (v.combustivel && v.combustivel.toLowerCase().includes(query)) ||
           v.placa.toLowerCase().includes(query) ||
-          v.cor.toLowerCase().includes(query) ||
-          v.status.toLowerCase().includes(query) ||
-          (v.localizacao && v.localizacao.toLowerCase().includes(query)) ||
-          (v.observacao && v.observacao.toLowerCase().includes(query)) ||
-          (v.dataCadastro && v.dataCadastro.toLowerCase().includes(query)) ||
-          v.ano.toString().includes(query);
-
+          (v.localizacao && v.localizacao.toLowerCase().includes(query));
         return matchesTab && matchesQuery;
       });
 
@@ -564,104 +450,53 @@
 
       emptyState.classList.add('hidden');
       vehicleList.innerHTML = filtered.map(v => {
-        const isMoto = v.tipo === 'Moto';
-        const icon = isMoto ? '<i class="fa-solid fa-motorcycle text-red-600" title="Moto"></i>' : '<i class="fa-solid fa-car text-blue-900" title="Carro"></i>';
-        const versaoBadge = v.versao ? `<span class="text-xs text-blue-900 bg-blue-50 px-1.5 py-0.5 rounded ml-1.5 font-medium border border-blue-100">${sanitizeHTML(v.versao)}</span>` : '';
-        const kmFormatted = v.km !== null && v.km !== undefined ? v.km.toLocaleString('pt-BR') + ' km' : 'Não informado';
-        const precoFormatted = v.preco !== null && v.preco !== undefined && !isNaN(v.preco) ? 'R$ ' + v.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : 'Sob consulta';
-        const local = v.localizacao || 'Loja';
-        const combustivel = v.combustivel || 'Flex';
-        const dataCad = v.dataCadastro || 'Não informada';
-
-        // Cálculo do tempo em estoque
-        const diasEmEstoque = calcularDiasEstoque(v.dataCadastro);
-        let badgeTempo = '';
-
-        if (diasEmEstoque !== null) {
-          if (diasEmEstoque > 60) {
-            badgeTempo = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200"><i class="fa-solid fa-clock mr-1"></i>${diasEmEstoque} dias</span>`;
-          } else if (diasEmEstoque > 30) {
-            badgeTempo = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200"><i class="fa-solid fa-clock mr-1"></i>${diasEmEstoque} dias</span>`;
-          } else {
-            badgeTempo = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200"><i class="fa-solid fa-clock mr-1"></i>${diasEmEstoque} ${diasEmEstoque === 1 ? 'dia' : 'dias'}</span>`;
-          }
-        } else {
-          badgeTempo = `<span class="text-xs text-slate-400">N/D</span>`;
-        }
+        const icon = v.tipo === 'Moto' ? '<i class="fa-solid fa-motorcycle text-red-600"></i>' : '<i class="fa-solid fa-car text-blue-900"></i>';
+        const dias = calcularDiasEstoque(v.dataCadastro);
+        const precoFormatted = v.preco ? 'R$ ' + v.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Sob consulta';
 
         return `
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="p-4">
-            <div class="flex items-center gap-2 font-bold text-slate-800">
-              ${icon}
-              <span>${sanitizeHTML(v.marca)} ${sanitizeHTML(v.modelo)}</span>
-              ${versaoBadge}
-            </div>
-            <div class="flex items-center gap-2 mt-0.5">
-              <span class="text-xs text-slate-400 max-w-xs truncate">${sanitizeHTML(v.observacao) || 'Sem observações'}</span>
-              <button onclick="editObservacao(${v.id})" class="text-xs text-blue-800 hover:text-blue-950 underline" title="Editar Observação">
-                <i class="fa-solid fa-pen text-[10px]"></i>
-              </button>
-            </div>
+            <div class="flex items-center gap-2 font-bold text-slate-800">${icon} <span>${v.marca} ${v.modelo}</span></div>
+            <div class="text-xs text-slate-400 mt-0.5">${v.observacao || 'Sem obs.'}</div>
           </td>
           <td class="p-4">
             <div class="flex items-center gap-2">
-              <span class="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-blue-900 border border-slate-200">${sanitizeHTML(v.placa)}</span>
-              <button onclick="editPlaca(${v.id})" class="text-xs text-blue-800 hover:text-blue-950" title="Editar Placa">
-                <i class="fa-solid fa-pen text-[10px]"></i>
-              </button>
+              <span class="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-blue-900 border">${v.placa}</span>
+              <button onclick="editPlaca('${v.firebaseId}')" class="text-xs text-blue-800"><i class="fa-solid fa-pen text-[10px]"></i></button>
             </div>
-            <div class="text-xs text-slate-500 mt-1">${sanitizeHTML(v.cor)}</div>
+            <div class="text-xs text-slate-500 mt-1">${v.cor}</div>
           </td>
           <td class="p-4">
-            <div class="font-medium text-slate-700">${v.ano} <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 ml-1">${sanitizeHTML(combustivel)}</span></div>
-            <div class="flex items-center gap-1.5 text-xs text-slate-500 font-normal mt-0.5">
-              <span>${kmFormatted}</span>
-              <button onclick="editKm(${v.id})" class="text-xs text-blue-800 hover:text-blue-950" title="Editar Quilometragem">
-                <i class="fa-solid fa-pen text-[10px]"></i>
-              </button>
-            </div>
-            <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-              <i class="fa-regular fa-calendar text-[10px]"></i> Entrou: ${sanitizeHTML(dataCad)}
-              <button onclick="editDataCadastro(${v.id})" class="text-xs text-blue-800 hover:text-blue-950 ml-0.5" title="Editar Data de Entrada">
-                <i class="fa-solid fa-pen text-[10px]"></i>
-              </button>
-            </div>
+            <div class="font-medium text-slate-700">${v.ano}</div>
+            <div class="text-xs text-slate-500">${v.km ? v.km.toLocaleString('pt-BR') + ' km' : 'Não informado'}</div>
           </td>
           <td class="p-4">
-            ${badgeTempo}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">${dias !== null ? dias + ' dias' : 'N/D'}</span>
           </td>
           <td class="p-4">
             <div class="flex items-center gap-1.5 text-xs text-slate-700 font-semibold mb-1">
-              <i class="fa-solid fa-location-dot text-red-600"></i>
-              <span>${sanitizeHTML(local)}</span>
-              <button onclick="editLocalizacao(${v.id})" class="text-xs text-blue-800 hover:text-blue-950 ml-1" title="Editar Localização">
-                <i class="fa-solid fa-pen text-[10px]"></i>
-              </button>
+              <i class="fa-solid fa-location-dot text-red-600"></i> <span>${v.localizacao || 'Loja'}</span>
+              <button onclick="editLocalizacao('${v.firebaseId}')" class="text-xs text-blue-800"><i class="fa-solid fa-pen text-[10px]"></i></button>
             </div>
             <div class="flex items-center gap-1 text-xs text-emerald-700 font-bold mb-1">
               <span>${precoFormatted}</span>
-              <button onclick="editPreco(${v.id})" class="text-xs text-blue-800 hover:text-blue-950" title="Editar Preço">
-                <i class="fa-solid fa-pen text-[10px]"></i>
-              </button>
+              <button onclick="editPreco('${v.firebaseId}')" class="text-xs text-blue-800"><i class="fa-solid fa-pen text-[10px]"></i></button>
             </div>
-            <select onchange="updateStatus(${v.id}, this.value)" class="text-xs border rounded px-2 py-1 bg-white focus:outline-none cursor-pointer border-slate-300">
+            <select onchange="updateStatus('${v.firebaseId}', this.value)" class="text-xs border rounded px-2 py-1 bg-white">
               <option value="Disponível" ${v.status === 'Disponível' ? 'selected' : ''}>Disponível</option>
               <option value="Reservado" ${v.status === 'Reservado' ? 'selected' : ''}>Reservado</option>
               <option value="Vendido" ${v.status === 'Vendido' ? 'selected' : ''}>Vendido</option>
             </select>
           </td>
           <td class="p-4 text-right">
-            <button onclick="deleteVehicle(${v.id})" class="text-slate-400 hover:text-red-600 transition-colors p-1" title="Excluir">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
+            <button onclick="deleteVehicle('${v.firebaseId}')" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
           </td>
         </tr>
       `}).join('');
     }
 
     searchInput.addEventListener('input', render);
-    render();
   </script>
 </body>
 </html>
