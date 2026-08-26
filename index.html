@@ -23,7 +23,7 @@
           <p class="text-xs text-blue-200 font-medium">Sistema de Gestão de Estoque</p>
         </div>
       </div>
-      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v4.0 Supabase Realtime</span>
+      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v4.5 Paginado</span>
     </div>
   </header>
 
@@ -218,13 +218,28 @@
           <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-300"></i>
           <p class="text-sm font-medium">Nenhum veículo encontrado.</p>
         </div>
+
+        <!-- Barra de Paginação -->
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2 text-xs text-slate-600">
+            <span>Exibir por página:</span>
+            <select id="items-per-page" onchange="changeItemsPerPage(this.value)" class="border border-slate-300 rounded px-2 py-1 bg-white font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-800">
+              <option value="8" selected>8</option>
+              <option value="18">18</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+            <span id="pagination-info" class="text-slate-500 ml-2"></span>
+          </div>
+
+          <div id="pagination-controls" class="flex items-center gap-1"></div>
+        </div>
       </div>
     </section>
   </main>
 
   <!-- Script Supabase Integração -->
   <script>
-    // Prevenção de re-declaração de variáveis globais
     if (typeof supabaseClient === 'undefined') {
       var SUPABASE_URL = "https://gziythkdzerqbyingnfk.supabase.co";
       var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6aXl0aGtkemVycWJ5aW5nbmZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3ODAwNTUsImV4cCI6MjEwMzM1NjA1NX0.r9vVjroSIh35K8omW2VQ0q1dslG43Zg93gq0H6o9SdY";
@@ -233,6 +248,10 @@
 
     var vehicles = [];
     var currentTab = 'Todos';
+    
+    // Controle de Paginação
+    var currentPage = 1;
+    var itemsPerPage = 8;
 
     const form = document.getElementById('vehicle-form');
     const vehicleList = document.getElementById('vehicle-list');
@@ -268,7 +287,6 @@
       }
     }
 
-    // Escuta em tempo real
     supabaseClient.channel('public:vehicles')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => {
         loadVehicles();
@@ -439,6 +457,7 @@
 
     window.setTab = (tab) => {
       currentTab = tab;
+      currentPage = 1; // Reseta para a primeira página ao trocar de aba
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('bg-blue-900', 'text-white', 'shadow-sm');
         btn.classList.add('text-slate-600');
@@ -446,6 +465,17 @@
       const activeBtn = document.getElementById(`tab-${tab}`);
       activeBtn.classList.add('bg-blue-900', 'text-white', 'shadow-sm');
       activeBtn.classList.remove('text-slate-600');
+      render();
+    };
+
+    window.changeItemsPerPage = (num) => {
+      itemsPerPage = parseInt(num, 10);
+      currentPage = 1; // Reseta para a primeira página
+      render();
+    };
+
+    window.goToPage = (page) => {
+      currentPage = page;
       render();
     };
 
@@ -469,13 +499,31 @@
         return matchesTab && matchesQuery;
       });
 
+      // Atualiza Indicadores Superiores
       document.getElementById('stat-total').innerText = vehicles.length;
       document.getElementById('stat-carros').innerText = vehicles.filter(v => v.tipo === 'Carro').length;
       document.getElementById('stat-motos').innerText = vehicles.filter(v => v.tipo === 'Moto').length;
 
       document.getElementById('empty-state').classList.toggle('hidden', filtered.length > 0);
 
-      vehicleList.innerHTML = filtered.map(v => {
+      // Lógica de Paginação
+      const totalItems = filtered.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+      const paginatedVehicles = filtered.slice(startIndex, endIndex);
+
+      // Atualiza Informação da Paginação (Ex: Mostrando 1-8 de 25)
+      const infoText = totalItems > 0 
+        ? `Mostrando ${startIndex + 1}-${endIndex} de ${totalItems}`
+        : `0 veículos`;
+      document.getElementById('pagination-info').innerText = infoText;
+
+      // Renderiza Tabela
+      vehicleList.innerHTML = paginatedVehicles.map(v => {
         const icon = v.tipo === 'Moto' ? '<i class="fa-solid fa-motorcycle text-red-600"></i>' : '<i class="fa-solid fa-car text-blue-900"></i>';
         const dias = calcularDiasEstoque(v.created_at);
         const precoFormatted = v.preco ? 'R$ ' + Number(v.preco).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Sob consulta';
@@ -520,9 +568,53 @@
           </td>
         </tr>
       `}).join('');
+
+      // Renderiza Botões da Paginação
+      renderPaginationControls(totalPages);
     }
 
-    searchInput.addEventListener('input', render);
+    function renderPaginationControls(totalPages) {
+      const controls = document.getElementById('pagination-controls');
+      if (totalPages <= 1) {
+        controls.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+
+      // Botão Anterior
+      html += `
+        <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} 
+          class="px-2.5 py-1 text-xs font-semibold rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+      `;
+
+      // Botões Numéricos
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage) {
+          html += `<button class="px-3 py-1 text-xs font-bold rounded bg-blue-900 text-white shadow-sm">${i}</button>`;
+        } else {
+          html += `<button onclick="goToPage(${i})" class="px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-100">${i}</button>`;
+        }
+      }
+
+      // Botão Próximo
+      html += `
+        <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} 
+          class="px-2.5 py-1 text-xs font-semibold rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      `;
+
+      controls.innerHTML = html;
+    }
+
+    searchInput.addEventListener('input', () => {
+      currentPage = 1; // Reseta para a primeira página ao pesquisar
+      render();
+    });
+
     loadVehicles();
   </script>
 </body>
