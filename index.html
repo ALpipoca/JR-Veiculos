@@ -23,7 +23,7 @@
           <p class="text-xs text-blue-200 font-medium">Sistema de Gestão de Estoque</p>
         </div>
       </div>
-      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v4.5 Paginado</span>
+      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v4.6 Paginado & Edição KM</span>
     </div>
   </header>
 
@@ -345,6 +345,19 @@
       }
     };
 
+    window.editKm = async (id) => {
+      const v = vehicles.find(item => item.id === id);
+      if (!v) return;
+      const kmAtual = v.km !== null && v.km !== undefined ? Number(v.km).toLocaleString('pt-BR') : '';
+      const novoKm = prompt(`Editar KM (${v.placa}):`, kmAtual);
+      if (novoKm !== null) {
+        const kmLimpo = novoKm.replace(/\D/g, '');
+        const { error } = await supabaseClient.from('vehicles').update({ km: kmLimpo ? parseInt(kmLimpo, 10) : null }).eq('id', id);
+        if (error) showError('Erro ao atualizar KM', error.message);
+        else loadVehicles();
+      }
+    };
+
     window.editPreco = async (id) => {
       const v = vehicles.find(item => item.id === id);
       if (!v) return;
@@ -457,7 +470,7 @@
 
     window.setTab = (tab) => {
       currentTab = tab;
-      currentPage = 1; // Reseta para a primeira página ao trocar de aba
+      currentPage = 1;
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('bg-blue-900', 'text-white', 'shadow-sm');
         btn.classList.add('text-slate-600');
@@ -470,7 +483,7 @@
 
     window.changeItemsPerPage = (num) => {
       itemsPerPage = parseInt(num, 10);
-      currentPage = 1; // Reseta para a primeira página
+      currentPage = 1;
       render();
     };
 
@@ -516,7 +529,7 @@
       const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
       const paginatedVehicles = filtered.slice(startIndex, endIndex);
 
-      // Atualiza Informação da Paginação (Ex: Mostrando 1-8 de 25)
+      // Atualiza Informação da Paginação
       const infoText = totalItems > 0 
         ? `Mostrando ${startIndex + 1}-${endIndex} de ${totalItems}`
         : `0 veículos`;
@@ -527,6 +540,7 @@
         const icon = v.tipo === 'Moto' ? '<i class="fa-solid fa-motorcycle text-red-600"></i>' : '<i class="fa-solid fa-car text-blue-900"></i>';
         const dias = calcularDiasEstoque(v.created_at);
         const precoFormatted = v.preco ? 'R$ ' + Number(v.preco).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Sob consulta';
+        const kmFormatted = v.km !== null && v.km !== undefined ? Number(v.km).toLocaleString('pt-BR') + ' km' : 'Não informado';
 
         return `
         <tr class="hover:bg-slate-50 transition-colors">
@@ -543,7 +557,10 @@
           </td>
           <td class="p-4">
             <div class="font-medium text-slate-700">${v.ano || ''}</div>
-            <div class="text-xs text-slate-500">${v.km ? Number(v.km).toLocaleString('pt-BR') + ' km' : 'Não informado'}</div>
+            <div class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+              <span>${kmFormatted}</span>
+              <button onclick="editKm('${v.id}')" class="text-xs text-blue-800" title="Editar Quilometragem"><i class="fa-solid fa-pen text-[10px]"></i></button>
+            </div>
           </td>
           <td class="p-4">
             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">${dias !== null ? dias + ' dias' : 'N/D'}</span>
@@ -611,7 +628,7 @@
     }
 
     searchInput.addEventListener('input', () => {
-      currentPage = 1; // Reseta para a primeira página ao pesquisar
+      currentPage = 1;
       render();
     });
 
