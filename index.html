@@ -23,7 +23,7 @@
           <p class="text-xs text-blue-200 font-medium">Sistema de Gestão de Estoque</p>
         </div>
       </div>
-      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v4.6 Paginado & Edição KM</span>
+      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v4.7 Edição Completa (KM & Cor)</span>
     </div>
   </header>
 
@@ -358,6 +358,22 @@
       }
     };
 
+    window.editCor = async (id) => {
+      const v = vehicles.find(item => item.id === id);
+      if (!v) return;
+      const novaCor = prompt(`Editar Cor (${v.placa}):`, v.cor || '');
+      if (novaCor !== null) {
+        const corLimpa = novaCor.trim();
+        if (corLimpa === '') {
+          alert('A cor não pode ser vazia!');
+          return;
+        }
+        const { error } = await supabaseClient.from('vehicles').update({ cor: corLimpa }).eq('id', id);
+        if (error) showError('Erro ao atualizar cor', error.message);
+        else loadVehicles();
+      }
+    };
+
     window.editPreco = async (id) => {
       const v = vehicles.find(item => item.id === id);
       if (!v) return;
@@ -508,6 +524,7 @@
           (v.marca && v.marca.toLowerCase().includes(query)) ||
           (v.modelo && v.modelo.toLowerCase().includes(query)) ||
           (v.placa && v.placa.toLowerCase().includes(query)) ||
+          (v.cor && v.cor.toLowerCase().includes(query)) ||
           (v.localizacao && v.localizacao.toLowerCase().includes(query));
         return matchesTab && matchesQuery;
       });
@@ -553,7 +570,10 @@
               <span class="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-blue-900 border">${v.placa || ''}</span>
               <button onclick="editPlaca('${v.id}')" class="text-xs text-blue-800" title="Editar Placa"><i class="fa-solid fa-pen text-[10px]"></i></button>
             </div>
-            <div class="text-xs text-slate-500 mt-1">${v.cor || ''}</div>
+            <div class="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
+              <span>${v.cor || 'Não informada'}</span>
+              <button onclick="editCor('${v.id}')" class="text-xs text-blue-800" title="Editar Cor"><i class="fa-solid fa-pen text-[10px]"></i></button>
+            </div>
           </td>
           <td class="p-4">
             <div class="font-medium text-slate-700">${v.ano || ''}</div>
