@@ -23,7 +23,7 @@
           <p class="text-xs text-blue-200 font-medium">Sistema de Gestão de Estoque</p>
         </div>
       </div>
-      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v4.7 Edição Completa (KM & Cor)</span>
+      <span class="text-xs bg-blue-950 px-3 py-1 rounded-full text-blue-200 border border-blue-700 font-mono">v4.8 Edição Completa</span>
     </div>
   </header>
 
@@ -415,6 +415,17 @@
       }
     };
 
+    window.editObservacao = async (id) => {
+      const v = vehicles.find(item => item.id === id);
+      if (!v) return;
+      const novaObs = prompt(`Editar observação (${v.placa}):`, v.observacao || '');
+      if (novaObs !== null) {
+        const { error } = await supabaseClient.from('vehicles').update({ observacao: novaObs.trim() }).eq('id', id);
+        if (error) showError('Erro ao atualizar observação', error.message);
+        else loadVehicles();
+      }
+    };
+
     window.updateStatus = async (id, status) => {
       const { error } = await supabaseClient.from('vehicles').update({ status }).eq('id', id);
       if (error) showError('Erro ao atualizar status', error.message);
@@ -423,9 +434,9 @@
 
     window.downloadCSVTemplate = () => {
       const headers = "tipo,marca,modelo,versao,combustivel,cor,ano,placa,km,preco,status,localizacao,observacao\n";
-      const example1 = "Carro,Toyota,Corolla,XEI,Flex,Prata,2022,ABC1D23,45000,95000.00,Disponível,Loja,Único dono\n";
+      const example1 = "Carro,Toyota,Corolla,XEI,Flex,Prata,2022,ABC1D23,45000,95000.00,Disponível,Loja,\"Único dono, revisado no concessionária\"\n";
       const example2 = "Moto,Honda,CG 160,Titan,Gasolina,Vermelha,2023,XYZ9K88,12000,16500.00,Disponível,Lava Jato,Revisada\n";
-      const blob = new Blob([headers + example1 + example2], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob(["\uFEFF" + headers + example1 + example2], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -433,55 +444,101 @@
       link.click();
     };
 
+    // Parser seguro para ler arquivos CSV com suporte a aspas e múltiplos delimitadores
+    function parseCSVLine(text, delimiter) {
+      const pattern = new RegExp(
+        (
+          "(\\" + delimiter + "|\\r?\\n|\\r|^)" +
+          "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+          "([^\"\\" + delimiter + "\\r\\n]*))"
+        ),
+        "gi"
+      );
+
+      const fields = [];
+      let matches = null;
+
+      while ((matches = pattern.exec(text))) {
+        const matchedDelimiter = matches[1];
+        if (matchedDelimiter.length && matchedDelimiter !== delimiter) {
+          break;
+        }
+
+        let matchedValue;
+        if (matches[2]) {
+          matchedValue = matches[2].replace(new RegExp("\"\"", "g"), "\"");
+        } else {
+          matchedValue = matches[3];
+        }
+
+        fields.push(matchedValue.trim());
+      }
+      return fields;
+    }
+
+    function parseCSVText(csvContent) {
+      const cleanContent = csvContent.replace(/^\uFEFF/, '');
+      const lines = cleanContent.split(/\r\n|\n|\r/).filter(line => line.trim().length > 0);
+      if (lines.length <= 1) return [];
+
+      const delimiter = lines[0].includes(';') ? ';' : ',';
+      const rows = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const c = parseCSVLine(lines[i], delimiter);
+        if (c.length < 8) continue;
+
+        const placaUpper = (c[7] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (!placaUpper) continue;
+
+        rows.push({
+          tipo: c[0] || 'Carro',
+          marca: c[1] || 'N/A',
+          modelo: c[2] || 'N/A',
+          versao: c[3] || '',
+          combustivel: c[4] || 'Flex',
+          cor: c[5] || 'N/A',
+          ano: parseInt(c[6], 10) || 2024,
+          placa: placaUpper,
+          km: c[8] ? parseInt(c[8].replace(/\D/g, ''), 10) : null,
+          preco: c[9] ? parseFloat(c[9].replace(/\./g, '').replace(',', '.')) : null,
+          status: c[10] || 'Disponível',
+          localizacao: c[11] || 'Loja',
+          observacao: c[12] || ''
+        });
+      }
+      return rows;
+    }
+
     window.importCSV = (event) => {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const lines = e.target.result.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        if (lines.length <= 1) {
-          alert('CSV vazio.');
-          return;
-        }
+        try {
+          const rows = parseCSVText(e.target.result);
 
-        const rows = [];
-        for (let i = 1; i < lines.length; i++) {
-          const c = lines[i].split(',').map(item => item.trim().replace(/^["']|["']$/g, ''));
-          if (c.length < 8) continue;
+          if (rows.length === 0) {
+            alert('Nenhum registro válido encontrado no CSV.');
+            return;
+          }
 
-          const placaUpper = c[7].toUpperCase().replace(/[^A-Z0-9]/g, '');
-          if (!placaUpper) continue;
-
-          rows.push({
-            tipo: c[0] || 'Carro',
-            marca: c[1] || 'N/A',
-            modelo: c[2] || 'N/A',
-            versao: c[3] || '',
-            combustivel: c[4] || 'Flex',
-            cor: c[5] || 'N/A',
-            ano: parseInt(c[6], 10) || 2024,
-            placa: placaUpper,
-            km: c[8] ? parseInt(c[8].replace(/\D/g, ''), 10) : null,
-            preco: c[9] ? parseFloat(c[9].replace(',', '.')) : null,
-            status: c[10] || 'Disponível',
-            localizacao: c[11] || 'Loja',
-            observacao: c[12] || ''
-          });
-        }
-
-        if (rows.length > 0) {
           const { error } = await supabaseClient.from('vehicles').upsert(rows, { onConflict: 'placa' });
           if (!error) {
-            alert('Importação concluída no Supabase!');
+            alert(`Importação concluída! ${rows.length} veículos processados.`);
             loadVehicles();
           } else {
             showError('Erro ao importar CSV', error.message);
           }
+        } catch (err) {
+          console.error('Erro na leitura do CSV:', err);
+          showError('Erro ao processar arquivo', 'Formato de CSV inválido.');
+        } finally {
+          event.target.value = '';
         }
-        event.target.value = '';
       };
-      reader.readAsText(file);
+      reader.readAsText(file, 'UTF-8');
     };
 
     window.setTab = (tab) => {
@@ -525,6 +582,7 @@
           (v.modelo && v.modelo.toLowerCase().includes(query)) ||
           (v.placa && v.placa.toLowerCase().includes(query)) ||
           (v.cor && v.cor.toLowerCase().includes(query)) ||
+          (v.observacao && v.observacao.toLowerCase().includes(query)) ||
           (v.localizacao && v.localizacao.toLowerCase().includes(query));
         return matchesTab && matchesQuery;
       });
@@ -563,7 +621,10 @@
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="p-4">
             <div class="flex items-center gap-2 font-bold text-slate-800">${icon} <span>${v.marca || ''} ${v.modelo || ''}</span></div>
-            <div class="text-xs text-slate-400 mt-0.5">${v.observacao || 'Sem obs.'}</div>
+            <div class="text-xs text-slate-500 flex items-center gap-1 mt-1">
+              <span>${v.observacao || 'Sem obs.'}</span>
+              <button onclick="editObservacao('${v.id}')" class="text-xs text-blue-800" title="Editar Observação"><i class="fa-solid fa-pen text-[10px]"></i></button>
+            </div>
           </td>
           <td class="p-4">
             <div class="flex items-center gap-2">
