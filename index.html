@@ -136,7 +136,7 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Placa *</label>
-              <input type="text" id="placa" required placeholder="ABC1D23" max="8" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm uppercase focus:outline-none focus:ring-2 focus:ring-blue-800">
+              <input type="text" id="placa" required placeholder="ABC1D23" maxlength="8" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm uppercase focus:outline-none focus:ring-2 focus:ring-blue-800">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">KM</label>
@@ -248,8 +248,6 @@
 
     var vehicles = [];
     var currentTab = 'Todos';
-    
-    // Controle de Paginação
     var currentPage = 1;
     var itemsPerPage = 8;
 
@@ -287,16 +285,19 @@
       }
     }
 
+    // Ouvinte em tempo real do Supabase
     supabaseClient.channel('public:vehicles')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => {
         loadVehicles();
       })
       .subscribe();
 
+    // Evento para Cadastrar Veículo
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const placa = document.getElementById('placa').value.trim().toUpperCase();
 
+      // Checa duplicidade de placa
       const { data: existing, error: checkError } = await supabaseClient.from('vehicles').select('id').eq('placa', placa);
       
       if (checkError) {
@@ -309,8 +310,12 @@
         return;
       }
 
-      const kmClean = document.getElementById('km').value.replace(/\./g, '');
-      const precoClean = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
+      // Tratamento de valores para KM e Preço evitando enviar NaN
+      const rawKm = document.getElementById('km').value.replace(/\./g, '').trim();
+      const rawPreco = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.').trim();
+
+      const parsedKm = rawKm && !isNaN(rawKm) ? parseInt(rawKm, 10) : null;
+      const parsedPreco = rawPreco && !isNaN(rawPreco) ? parseFloat(rawPreco) : null;
 
       const payload = {
         tipo: document.getElementById('tipo').value,
@@ -321,8 +326,8 @@
         cor: document.getElementById('cor').value.trim(),
         ano: parseInt(document.getElementById('ano').value, 10),
         placa: placa,
-        km: kmClean ? parseInt(kmClean, 10) : null,
-        preco: precoClean ? parseFloat(precoClean) : null,
+        km: parsedKm,
+        preco: parsedPreco,
         localizacao: document.getElementById('localizacao').value.trim() || 'Loja',
         status: document.getElementById('status').value,
         observacao: document.getElementById('observacao').value.trim()
@@ -426,7 +431,6 @@
       }
     };
 
-    // Função para editar o tempo em estoque (dias)
     window.editDiasEstoque = async (id) => {
       const v = vehicles.find(item => item.id === id);
       if (!v) return;
@@ -441,7 +445,6 @@
           return;
         }
 
-        // Calcula a nova data de criação retrocedendo X dias
         const novaData = new Date();
         novaData.setDate(novaData.getDate() - dias);
 
@@ -473,7 +476,6 @@
       link.click();
     };
 
-    // Parser seguro para ler arquivos CSV com suporte a aspas e múltiplos delimitadores
     function parseCSVLine(text, delimiter) {
       const pattern = new RegExp(
         (
@@ -639,6 +641,17 @@
         : `0 veículos`;
       document.getElementById('pagination-info').innerText = infoText;
 
+      // Botões de navegação da página
+      let paginationHTML = '';
+      if (totalPages > 1) {
+        paginationHTML += `<button onclick="goToPage(${Math.max(1, currentPage - 1)})" class="px-2.5 py-1 text-xs border rounded ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-200'}">Anterior</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+          paginationHTML += `<button onclick="goToPage(${i})" class="px-2.5 py-1 text-xs border rounded ${currentPage === i ? 'bg-blue-900 text-white font-bold' : 'hover:bg-slate-200'}">${i}</button>`;
+        }
+        paginationHTML += `<button onclick="goToPage(${Math.min(totalPages, currentPage + 1)})" class="px-2.5 py-1 text-xs border rounded ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-200'}">Próximo</button>`;
+      }
+      document.getElementById('pagination-controls').innerHTML = paginationHTML;
+
       // Renderiza Tabela
       vehicleList.innerHTML = paginatedVehicles.map(v => {
         const icon = v.tipo === 'Moto' ? '<i class="fa-solid fa-motorcycle text-red-600"></i>' : '<i class="fa-solid fa-car text-blue-900"></i>';
@@ -649,7 +662,7 @@
         return `
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="p-4">
-            <div class="flex items-center gap-2 font-bold text-slate-800">${icon} <span>${v.marca || ''} ${v.modelo || ''}</span></div>
+            <div class="flex items-center gap-2 font-bold text-slate-800">${icon} <span>${v.marca || ''} ${v.modelo || ''} ${v.versao ? '(' + v.versao + ')' : ''}</span></div>
             <div class="text-xs text-slate-500 flex items-center gap-1 mt-1">
               <span>${v.observacao || 'Sem obs.'}</span>
               <button onclick="editObservacao('${v.id}')" class="text-xs text-blue-800" title="Editar Observação"><i class="fa-solid fa-pen text-[10px]"></i></button>
@@ -683,30 +696,31 @@
             </div>
           </td>
           <td class="p-4">
-            <div class="flex items-center gap-1.5 text-xs text-slate-700 font-semibold mb-1">
-              <i class="fa-solid fa-location-dot text-red-600"></i> <span>${v.localizacao || 'Loja'}</span>
+            <div class="font-medium text-slate-700 flex items-center gap-1">
+              <span>${v.localizacao || 'Loja'}</span>
               <button onclick="editLocalizacao('${v.id}')" class="text-xs text-blue-800" title="Editar Localização"><i class="fa-solid fa-pen text-[10px]"></i></button>
             </div>
-            <div class="flex items-center gap-1 text-xs text-emerald-700 font-bold mb-1">
-              <span>${precoFormatted}</span>
-              <button onclick="editPreco('${v.id}')" class="text-xs text-blue-800" title="Editar Preço"><i class="fa-solid fa-pen text-[10px]"></i></button>
+            <div class="mt-1">
+              <select onchange="updateStatus('${v.id}', this.value)" class="text-xs font-semibold px-2 py-0.5 rounded border ${v.status === 'Disponível' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : v.status === 'Reservado' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-rose-100 text-rose-800 border-rose-300'}">
+                <option value="Disponível" ${v.status === 'Disponível' ? 'selected' : ''}>Disponível</option>
+                <option value="Reservado" ${v.status === 'Reservado' ? 'selected' : ''}>Reservado</option>
+                <option value="Vendido" ${v.status === 'Vendido' ? 'selected' : ''}>Vendido</option>
+              </select>
             </div>
-            <select onchange="updateStatus('${v.id}', this.value)" class="text-xs border rounded px-2 py-1 bg-white">
-              <option value="Disponível" ${v.status === 'Disponível' ? 'selected' : ''}>Disponível</option>
-              <option value="Reservado" ${v.status === 'Reservado' ? 'selected' : ''}>Reservado</option>
-              <option value="Vendido" ${v.status === 'Vendido' ? 'selected' : ''}>Vendido</option>
-            </select>
           </td>
           <td class="p-4 text-right">
-            <button onclick="deleteVehicle('${v.id}')" class="text-slate-400 hover:text-red-600 p-1" title="Excluir">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
+            <div class="font-bold text-slate-800 mb-1">
+              ${precoFormatted}
+              <button onclick="editPreco('${v.id}')" class="text-xs text-blue-800 ml-1" title="Editar Preço"><i class="fa-solid fa-pen text-[10px]"></i></button>
+            </div>
+            <button onclick="deleteVehicle('${v.id}')" class="text-rose-600 hover:text-rose-800 text-xs font-medium" title="Excluir"><i class="fa-solid fa-trash mr-1"></i>Excluir</button>
           </td>
         </tr>
         `;
       }).join('');
     }
 
+    // Inicializa carregando os dados do Supabase ao abrir a página
     loadVehicles();
   </script>
 </body>
